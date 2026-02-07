@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@octokit/auth-app": "^8.2.0",
+    "@octokit/rest": "^22.0.1",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.0",
     "next": "^16.1.6",
