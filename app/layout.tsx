@@ -19,7 +19,7 @@ export default function RootLayout({
         <TopBar />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
-          <main className="flex-1 overflow-auto p-8">
+          <main className="flex-1 overflow-auto p-8 bg-yellow-200">
             {children}
           </main>
         </div>
