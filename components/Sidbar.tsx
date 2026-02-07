@@ -1,44 +1,58 @@
-import Link from 'next/link'
+'use client'
 
-export default function Sidebar() {
+import Link from 'next/link'
+import { useState } from 'react'
+import type { ContentNavSection } from '@/lib/content-nav'
+
+type SidebarProps = { nav: ContentNavSection[] }
+
+export default function Sidebar({ nav }: SidebarProps) {
+  const [openCategories, setOpenCategories] = useState<Set<string>>(() => new Set(nav.map((s) => s.category)))
+
+  function toggle(category: string) {
+    setOpenCategories((prev) => {
+      const next = new Set(prev)
+      if (next.has(category)) next.delete(category)
+      else next.add(category)
+      return next
+    })
+  }
+
   return (
     <div className="w-64 border-r bg-green-200 overflow-auto">
       <div className="p-4">
         <nav className="space-y-2">
-          {/* Foundation */}
-          <div>
-            <div className="font-semibold text-sm text-gray-600 mb-2">Foundation</div>
-            <Link href="/content/foundation/color" className="block py-2 px-3 text-sm hover:bg-gray-200 rounded">
-              Color
-            </Link>
-            <Link href="/content/foundation/typography" className="block py-2 px-3 text-sm hover:bg-gray-200 rounded">
-              Typography
-            </Link>
-          </div>
+          {nav.map((section) => {
+            const isOpen = openCategories.has(section.category)
+            return (
+              <div key={section.category} className={section.category === 'foundations' ? '' : 'mt-4'}>
+                <button
+                  type="button"
+                  onClick={() => toggle(section.category)}
+                  className="flex w-full items-center justify-between font-semibold text-sm text-gray-600 mb-2 py-1 px-2 rounded hover:bg-gray-300/80"
+                >
+                  <span>{section.label}</span>
+                  <span className="text-gray-500 select-none" aria-hidden>
+                    {isOpen ? '▼' : '▶'}
+                  </span>
+                </button>
+                {isOpen && (
+                  <div className="pl-1">
+                    {section.files.map((file) => (
+                      <Link
+                        key={file.slug}
+                        href={`/content/${section.category}/${file.slug}`}
+                        className="block py-2 px-3 text-sm hover:bg-gray-200 rounded"
+                      >
+                        {file.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
 
-          {/* Component */}
-          <div className="mt-4">
-            <div className="font-semibold text-sm text-gray-600 mb-2">Component</div>
-            <Link href="/content/component/tab-bars-text" className="block py-2 px-3 text-sm hover:bg-gray-200 rounded">
-              Tab Bars - Text
-            </Link>
-            <Link href="/content/component/tab-bars-chip" className="block py-2 px-3 text-sm hover:bg-gray-200 rounded">
-              Tab Bars - Chip
-            </Link>
-            <Link href="/content/component/bottom-sheets" className="block py-2 px-3 text-sm hover:bg-gray-200 rounded">
-              Bottom Sheets
-            </Link>
-          </div>
-
-          {/* UI Pattern */}
-          <div className="mt-4">
-            <div className="font-semibold text-sm text-gray-600 mb-2">UI Pattern</div>
-            <Link href="/content/uipattern/example-pattern" className="block py-2 px-3 text-sm hover:bg-gray-200 rounded">
-              Example Pattern
-            </Link>
-          </div>
-
-          {/* Admin */}
           <div className="mt-6 pt-4 border-t">
             <div className="font-semibold text-sm text-gray-600 mb-2">Admin</div>
             <Link href="/schemas" className="block py-2 px-3 text-sm hover:bg-gray-200 rounded">
