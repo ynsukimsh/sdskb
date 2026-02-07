@@ -3,7 +3,7 @@ name: Color
 description: Foundation color system for the design system
 figmaLink: https://figma.com/file/example-color
 do: Use semantic color tokens for consistency
-dont: Hardcode hex values directly in designs, make new tokens
+dont: Hardcode hex values directly in designs
 ---
 
 # Color
