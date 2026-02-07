@@ -1,5 +1,5 @@
 ---
-name: Color
+name: ColorBadgers
 description: Foundation color system for the design system
 figmaLink: https://figma.com/file/example-color
 do: Use semantic color tokens for consistency
