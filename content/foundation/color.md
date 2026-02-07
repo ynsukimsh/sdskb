@@ -8,4 +8,4 @@ dont: Hardcode hex values directly in designs
 
 # Color
 
-Additional documentation about the color system goes here...
+Additional documentation about the color system goes here...haha
