@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import * as yaml from 'js-yaml'
+import yaml from 'js-yaml'
 
 export default function SchemasPage() {
   const schemasDir = path.join(process.cwd(), 'schemas')
