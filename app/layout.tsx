@@ -1,5 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
+import TopBar from '@/components/TopBar'
+import Sidebar from '@/components/Sidbar'
 
 export const metadata: Metadata = {
   title: 'SDS Knowledge Base',
@@ -13,7 +15,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="h-screen flex flex-col">
+        <TopBar />
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar />
+          <main className="flex-1 overflow-auto p-8">
+            {children}
+          </main>
+        </div>
+      </body>
     </html>
   )
 }
