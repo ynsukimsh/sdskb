@@ -1,10 +1,24 @@
 {
   "structure": [
     {
-      "type": "page",
-      "path": "information/solid-design-2",
+      "type": "folder",
+      "path": "foundation",
       "order": 1,
-      "pinned": true
+      "pinned": false,
+      "children": [
+        {
+          "type": "page",
+          "path": "foundation/colors",
+          "order": 1,
+          "pinned": false
+        },
+        {
+          "type": "page",
+          "path": "foundation/typography",
+          "order": 2,
+          "pinned": false
+        }
+      ]
     },
     {
       "type": "folder",
@@ -34,28 +48,8 @@
     },
     {
       "type": "folder",
-      "path": "foundation",
-      "order": 3,
-      "pinned": false,
-      "children": [
-        {
-          "type": "page",
-          "path": "foundation/colors",
-          "order": 1,
-          "pinned": false
-        },
-        {
-          "type": "page",
-          "path": "foundation/typography",
-          "order": 2,
-          "pinned": false
-        }
-      ]
-    },
-    {
-      "type": "folder",
       "path": "uipattern",
-      "order": 4,
+      "order": 3,
       "pinned": false,
       "children": [
         {
@@ -65,13 +59,6 @@
           "pinned": false
         }
       ]
-    },
-    {
-      "type": "folder",
-      "path": "babo",
-      "order": 5,
-      "pinned": false,
-      "children": []
     }
   ]
 }
