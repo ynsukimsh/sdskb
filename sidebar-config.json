@@ -75,13 +75,20 @@
           "path": "components/tab-bars-text",
           "order": 4,
           "pinned": false
-        },
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "path": "pop-ups",
+      "order": 5,
+      "pinned": false,
+      "children": [
         {
-          "type": "folder",
-          "path": "components/buttons",
-          "order": 5,
-          "pinned": false,
-          "children": []
+          "type": "page",
+          "path": "pop-ups/pop-upopps",
+          "order": 1,
+          "pinned": false
         }
       ]
     }
