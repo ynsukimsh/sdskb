@@ -16,12 +16,13 @@ export default async function ContentSlugPage({ params }: Props) {
   const raw = fs.readFileSync(filePath, 'utf8')
   const { data, content } = matter(raw)
   const initial = {
-    name: (data?.name as string) ?? '',
+    name: (data?.name as string) ?? (data?.title as string) ?? '',
     description: (data?.description as string) ?? '',
     figmaLink: (data?.figmaLink as string) ?? '',
     do: (data?.do as string) ?? '',
     dont: (data?.dont as string) ?? '',
     body: content?.trim() ?? '',
+    heroImage: (data?.image as string) ?? '',
   }
 
   return (

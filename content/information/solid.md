@@ -1,9 +1,7 @@
 ---
-name: ''
-description: ''
-figmaLink: ''
-do: ''
-dont: ''
+title: SOLID
+image: /asset/images/home_hero.png
+textBody: "SOLID DS is a good design system and this site is documentation for it."
 ---
 
 # About SOLID Design System

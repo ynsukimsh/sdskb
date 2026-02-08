@@ -1,0 +1,12 @@
+name: information
+version: 1
+fields:
+  - name: title
+    type: string
+    required: true
+  - name: image
+    type: url
+    required: true
+  - name: textBody
+    type: text
+    required: true

@@ -1,5 +1,6 @@
 {
   "structure": [
+    { "type": "page", "path": "information/solid", "order": 1, "pinned": true },
     {
       "type": "folder",
       "path": "components",

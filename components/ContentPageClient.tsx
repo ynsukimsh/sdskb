@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
 import yaml from 'js-yaml'
 
@@ -11,6 +12,7 @@ export type ContentInitial = {
   do: string
   dont: string
   body: string
+  heroImage?: string
 }
 
 const markdownComponents = {
@@ -92,6 +94,7 @@ export function ContentPageClient({ category, slug, initial }: Props) {
         do: form.do,
         dont: form.dont,
       }
+      if (form.heroImage) frontmatter.image = form.heroImage
       const fmString = yaml.dump(frontmatter, { lineWidth: -1 }).trim()
       const fullContent = `---\n${fmString}\n---\n\n${form.body.trimStart()}\n`
       const res = await fetch('/api/save-content', {
@@ -256,6 +259,18 @@ export function ContentPageClient({ category, slug, initial }: Props) {
       )}
       <header className="mb-8 pr-24">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
+        {display.heroImage && (
+          <div className="mt-4 mb-6 -mx-0 overflow-hidden rounded-xl">
+            <Image
+              src={display.heroImage}
+              alt=""
+              width={800}
+              height={400}
+              className="w-full h-auto object-cover"
+              priority
+            />
+          </div>
+        )}
         {display.description && (
           <p className="text-lg text-gray-600 leading-relaxed">{display.description}</p>
         )}
