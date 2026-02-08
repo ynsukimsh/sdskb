@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
 import yaml from 'js-yaml'
@@ -62,6 +63,7 @@ type Props = {
 }
 
 export function ContentPageClient({ category, slug, initial }: Props) {
+  const router = useRouter()
   const [isEditMode, setIsEditMode] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [form, setForm] = useState<ContentInitial>(initial)
@@ -100,11 +102,21 @@ export function ContentPageClient({ category, slug, initial }: Props) {
       const res = await fetch('/api/save-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, slug, content: fullContent }),
+        body: JSON.stringify({
+          category,
+          slug,
+          content: fullContent,
+          name: form.name,
+        }),
       })
       const data = await res.json()
       if (!res.ok || !data.success) {
         setMessage({ type: 'error', text: data.error ?? 'Failed to save' })
+        return
+      }
+      if (data.renamed && data.newSlug) {
+        setMessage({ type: 'success', text: 'Saved and renamed. Redirecting…' })
+        router.push(`/content/${category}/${data.newSlug}`)
         return
       }
       setMessage({ type: 'success', text: 'Saved successfully' })
