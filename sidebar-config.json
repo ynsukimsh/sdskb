@@ -8,13 +8,13 @@
     },
     {
       "type": "folder",
-      "path": "uipattern",
+      "path": "uipatternsszzz",
       "order": 2,
       "pinned": false,
       "children": [
         {
           "type": "page",
-          "path": "uipattern/example-pattern",
+          "path": "uipatternsszzz/example-pattern",
           "order": 1,
           "pinned": false
         }
