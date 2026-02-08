@@ -16,6 +16,11 @@ function getItemPath(item: SidebarConfigItem): string {
   return item.path
 }
 
+function getOrder(item: SidebarConfigItem | undefined): number {
+  if (item == null) return 0
+  return 'order' in item ? (item.order ?? 0) : 0
+}
+
 export function isPinned(item: SidebarConfigItem): boolean {
   if (item.type === 'divider') return false
   return item.pinned
@@ -27,9 +32,7 @@ export function sortToDisplayOrder(
   atRootLevel = false
 ): SidebarConfigItem[] {
   if (atRootLevel) {
-    const byOrder = [...items].sort(
-      (a, b) => ('order' in a ? a.order : 0) - ('order' in b ? b.order : 0)
-    )
+    const byOrder = [...items].sort((a, b) => getOrder(a) - getOrder(b))
     return byOrder.map((item) => {
       if (item.type === 'folder') {
         return { ...item, children: sortToDisplayOrder(item.children, false) }
@@ -40,13 +43,13 @@ export function sortToDisplayOrder(
 
   const pinned = items
     .filter((i): i is SidebarConfigPage | SidebarConfigFolder => i.type !== 'divider' && isPinned(i))
-    .sort((a, b) => ('order' in a ? a.order : 0) - ('order' in b ? b.order : 0))
+    .sort((a, b) => getOrder(a) - getOrder(b))
   const dividers = items
     .filter((i): i is SidebarConfigDivider => i.type === 'divider')
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .sort((a, b) => ((a?.order) ?? 0) - ((b?.order) ?? 0))
   const unpinned = items
     .filter((i): i is SidebarConfigPage | SidebarConfigFolder => i.type !== 'divider' && !isPinned(i))
-    .sort((a, b) => getItemPath(a).localeCompare(getItemPath(b), undefined, { sensitivity: 'base' }))
+    .sort((a, b) => (a == null || b == null ? 0 : getItemPath(a).localeCompare(getItemPath(b), undefined, { sensitivity: 'base' })))
 
   const result: SidebarConfigItem[] = [...pinned, ...dividers, ...unpinned]
 
