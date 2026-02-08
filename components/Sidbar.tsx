@@ -219,12 +219,12 @@ export default function Sidebar({ defaultWidthPx }: SidebarProps) {
           type="button"
           onClick={() => toggleFolder(item.path)}
           data-sidebar="folder-header"
-          className={`flex w-full items-center gap-1 text-sm mb-0.5 py-0.5 px-0.5 rounded hover:bg-gray-300/80 ${folderLabelClass}`}
+          className={`flex w-full items-center justify-between gap-2 text-sm mb-0.5 py-0.5 px-0.5 rounded hover:bg-gray-300/80 ${folderLabelClass}`}
         >
+          <span>{getLabel(item.path)}</span>
           <span className="text-gray-500 select-none inline-flex shrink-0">
             <ChevronIcon open={isFolderOpen} />
           </span>
-          <span>{getLabel(item.path)}</span>
         </button>
         <div
           className="grid transition-[grid-template-rows] duration-200 ease-out"
