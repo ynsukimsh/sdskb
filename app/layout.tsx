@@ -21,7 +21,7 @@ export default async function RootLayout({
         <TopBar />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar nav={nav} />
-          <main className="flex-1 overflow-auto p-8 bg-yellow-200">
+          <main className="flex-1 overflow-auto p-8 pt-24">
             {children}
           </main>
         </div>

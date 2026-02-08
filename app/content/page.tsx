@@ -3,6 +3,8 @@ import path from 'path'
 import matter from 'gray-matter'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default function ContentPage() {
   const contentDir = path.join(process.cwd(), 'content')
   const categories = fs.readdirSync(contentDir)
