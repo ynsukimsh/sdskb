@@ -54,7 +54,7 @@
         },
         {
           "type": "page",
-          "path": "components/tab-bars-chip",
+          "path": "components/control",
           "order": 3,
           "pinned": false
         }
