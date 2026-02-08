@@ -8,25 +8,25 @@
     },
     {
       "type": "folder",
-      "path": "components",
+      "path": "componentssss",
       "order": 2,
       "pinned": false,
       "children": [
         {
           "type": "page",
-          "path": "components/tab-bars-chip",
+          "path": "componentssss/tab-bars-chip",
           "order": 1,
           "pinned": true
         },
         {
           "type": "page",
-          "path": "components/bottom-sheets",
+          "path": "componentssss/bottom-sheets",
           "order": 2,
           "pinned": false
         },
         {
           "type": "page",
-          "path": "components/tab-bars-text",
+          "path": "componentssss/tab-bars-text",
           "order": 3,
           "pinned": false
         }
@@ -39,16 +39,9 @@
       "pinned": false,
       "children": [
         {
-          "type": "folder",
-          "path": "uipattern/bobobat",
-          "order": 1,
-          "pinned": false,
-          "children": []
-        },
-        {
           "type": "page",
           "path": "uipattern/example-pattern",
-          "order": 2,
+          "order": 1,
           "pinned": false
         }
       ]
