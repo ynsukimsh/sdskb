@@ -1,6 +1,6 @@
 ---
 name: SOLID Design 2
-description: ''
+description: ssss
 figmaLink: ''
 do: ''
 dont: ''
