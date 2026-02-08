@@ -2,22 +2,8 @@
   "structure": [
     {
       "type": "folder",
-      "path": "uipattern",
-      "order": 1,
-      "pinned": false,
-      "children": [
-        {
-          "type": "page",
-          "path": "uipattern/example-pattern",
-          "order": 1,
-          "pinned": false
-        }
-      ]
-    },
-    {
-      "type": "folder",
       "path": "foundation",
-      "order": 2,
+      "order": 1,
       "pinned": false,
       "children": [
         {
@@ -30,6 +16,20 @@
           "type": "page",
           "path": "foundation/typography",
           "order": 2,
+          "pinned": false
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "path": "uipattern",
+      "order": 2,
+      "pinned": false,
+      "children": [
+        {
+          "type": "page",
+          "path": "uipattern/example-pattern",
+          "order": 1,
           "pinned": false
         }
       ]
