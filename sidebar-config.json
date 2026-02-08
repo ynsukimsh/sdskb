@@ -8,34 +8,8 @@
     },
     {
       "type": "folder",
-      "path": "componentssss",
-      "order": 2,
-      "pinned": false,
-      "children": [
-        {
-          "type": "page",
-          "path": "componentssss/tab-bars-chip",
-          "order": 1,
-          "pinned": true
-        },
-        {
-          "type": "page",
-          "path": "componentssss/bottom-sheets",
-          "order": 2,
-          "pinned": false
-        },
-        {
-          "type": "page",
-          "path": "componentssss/tab-bars-text",
-          "order": 3,
-          "pinned": false
-        }
-      ]
-    },
-    {
-      "type": "folder",
       "path": "uipattern",
-      "order": 3,
+      "order": 2,
       "pinned": false,
       "children": [
         {
@@ -49,7 +23,7 @@
     {
       "type": "folder",
       "path": "foundation",
-      "order": 4,
+      "order": 3,
       "pinned": false,
       "children": [
         {
@@ -69,6 +43,45 @@
           "path": "foundation/typography",
           "order": 3,
           "pinned": false
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "path": "components",
+      "order": 4,
+      "pinned": false,
+      "children": [
+        {
+          "type": "page",
+          "path": "components/bottom-sheets",
+          "order": 1,
+          "pinned": false
+        },
+        {
+          "type": "page",
+          "path": "components/pop-up",
+          "order": 2,
+          "pinned": false
+        },
+        {
+          "type": "page",
+          "path": "components/tab-bars-chip",
+          "order": 3,
+          "pinned": false
+        },
+        {
+          "type": "page",
+          "path": "components/tab-bars-text",
+          "order": 4,
+          "pinned": false
+        },
+        {
+          "type": "folder",
+          "path": "components/buttons",
+          "order": 5,
+          "pinned": false,
+          "children": []
         }
       ]
     }
