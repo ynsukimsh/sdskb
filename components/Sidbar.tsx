@@ -194,7 +194,7 @@ export default function Sidebar({ defaultWidthPx }: SidebarProps) {
           key={item.path}
           href={href}
           data-sidebar="content-link"
-          className={`block py-0.5 px-3 text-sm hover:bg-gray-200 rounded ${isPageSelected ? 'text-blue-500 font-medium' : ''}`}
+          className={`block py-0.5 px-0.5 text-sm hover:bg-gray-200 rounded ${isPageSelected ? 'text-blue-500 font-bold' : ''}`}
         >
           {getLabel(item.path)}
         </Link>
