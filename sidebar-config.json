@@ -52,7 +52,7 @@
         },
         {
           "type": "folder",
-          "path": "components/button",
+          "path": "components/bobo",
           "order": 4,
           "pinned": false,
           "children": []
