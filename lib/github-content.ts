@@ -98,8 +98,9 @@ export async function fetchContentStructureFromGitHub(): Promise<SidebarConfigIt
     return []
   }
 
+  type ContentEntry = (typeof contentEntries)[number]
   const categoryDirs = contentEntries
-    .filter((e): e is { name: string; path: string; type: string } => e.type === 'dir')
+    .filter((e): e is ContentEntry & { type: 'dir' } => e.type === 'dir')
     .map((e) => e.name)
 
   const orderedCategories = [...categoryDirs].sort((a, b) => {
@@ -123,8 +124,9 @@ export async function fetchContentStructureFromGitHub(): Promise<SidebarConfigIt
 
     if (!Array.isArray(categoryEntries)) continue
 
+    type CategoryEntry = (typeof categoryEntries)[number]
     const mdFiles = categoryEntries
-      .filter((e): e is { name: string } => e.type === 'file' && e.name.endsWith('.md'))
+      .filter((e): e is CategoryEntry & { type: 'file' } => e.type === 'file' && e.name.endsWith('.md'))
       .map((e) => e.name.replace(/\.md$/, ''))
       .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
 
