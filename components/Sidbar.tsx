@@ -246,7 +246,7 @@ export default function Sidebar({ defaultWidthPx }: SidebarProps) {
       className="flex shrink-0 relative"
       style={{ width: widthPx }}
     >
-      <div className="w-full h-full bg-gray-100 overflow-auto">
+      <div className="w-full h-full overflow-auto">
         <div className="p-2.5 pt-20">
           <nav className="space-y-4">
             {loading && (
