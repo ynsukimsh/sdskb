@@ -49,6 +49,13 @@
           "path": "components/tab-bars-text",
           "order": 3,
           "pinned": false
+        },
+        {
+          "type": "folder",
+          "path": "components/button",
+          "order": 4,
+          "pinned": false,
+          "children": []
         }
       ]
     },
