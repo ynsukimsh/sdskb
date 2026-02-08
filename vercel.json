@@ -1,0 +1,8 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
+  "ignoreCommand": "bash -c 'CHANGED=$(git diff --name-only HEAD^ HEAD 2>/dev/null); [ -z \"$CHANGED\" ] && exit 0; for f in $CHANGED; do case \"$f\" in content/*) ;; *) exit 1 ;; esac; done; exit 0'"
+}
