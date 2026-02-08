@@ -20,7 +20,7 @@
         },
         {
           "type": "page",
-          "path": "components/tab-bars-chip-type",
+          "path": "components/tab-bars-chip",
           "order": 2,
           "pinned": false
         },
