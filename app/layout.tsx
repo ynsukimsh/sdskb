@@ -2,7 +2,6 @@ import './globals.css'
 import type { Metadata } from 'next'
 import TopBar from '@/components/TopBar'
 import Sidebar from '@/components/Sidbar'
-import { getContentNav } from '@/lib/content-nav'
 
 export const metadata: Metadata = {
   title: 'SDS Knowledge Base',
@@ -14,13 +13,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const nav = getContentNav()
   return (
     <html lang="en">
       <body className="h-screen flex flex-col">
         <TopBar />
         <div className="flex flex-1 overflow-hidden">
-          <Sidebar nav={nav} />
+          <Sidebar />
           <main className="flex-1 overflow-auto p-8 pt-24">
             {children}
           </main>

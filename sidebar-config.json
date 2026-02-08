@@ -1,0 +1,34 @@
+{
+  "structure": [
+    {
+      "type": "folder",
+      "path": "component",
+      "order": 2,
+      "pinned": false,
+      "children": [
+        { "type": "page", "path": "component/bottom-sheets", "order": 1, "pinned": false },
+        { "type": "page", "path": "component/tab-bars-chip", "order": 2, "pinned": false },
+        { "type": "page", "path": "component/tab-bars-text", "order": 3, "pinned": false }
+      ]
+    },
+    {
+      "type": "folder",
+      "path": "foundation",
+      "order": 1,
+      "pinned": false,
+      "children": [
+        { "type": "page", "path": "foundation/colors", "order": 1, "pinned": false },
+        { "type": "page", "path": "foundation/typography", "order": 2, "pinned": false }
+      ]
+    },
+    {
+      "type": "folder",
+      "path": "uipattern",
+      "order": 3,
+      "pinned": false,
+      "children": [
+        { "type": "page", "path": "uipattern/example-pattern", "order": 1, "pinned": false }
+      ]
+    }
+  ]
+}

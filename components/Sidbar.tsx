@@ -3,17 +3,52 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useCallback, useEffect } from 'react'
-import type { ContentNavSection } from '@/lib/content-nav'
+import sidebarConfig from '@/sidebar-config.json'
 
 const SIDEBAR_DEFAULT_WIDTH_PX = 192
 const SIDEBAR_MIN_WIDTH_PX = 160
 const SIDEBAR_MAX_WIDTH_PX = 400
 
-type SidebarProps = {
-  nav: ContentNavSection[]
-  /** Initial width in px. Ignored after first user resize. */
-  defaultWidthPx?: number
+type SidebarConfigPage = { type: 'page'; path: string; order: number; pinned: boolean }
+type SidebarConfigFolder = {
+  type: 'folder'
+  path: string
+  order: number
+  pinned: boolean
+  children: SidebarConfigItem[]
 }
+type SidebarConfigDivider = { type: 'divider'; order?: number }
+type SidebarConfigItem = SidebarConfigPage | SidebarConfigFolder | SidebarConfigDivider
+
+function slugToLabel(slug: string): string {
+  return slug
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+function getLabel(path: string): string {
+  const segment = path.split('/').pop() ?? path
+  return slugToLabel(segment)
+}
+
+function sortItems(items: SidebarConfigItem[]): SidebarConfigItem[] {
+  return [...items].sort((a, b) => {
+    if (a.type === 'divider' && b.type === 'divider') return (a.order ?? 0) - (b.order ?? 0)
+    if (a.type === 'divider') return 1
+    if (b.type === 'divider') return -1
+    const aPinned = 'pinned' in a && a.pinned ? 1 : 0
+    const bPinned = 'pinned' in b && b.pinned ? 1 : 0
+    if (bPinned !== aPinned) return bPinned - aPinned
+    return ('order' in a ? a.order : 0) - ('order' in b ? b.order : 0)
+  })
+}
+
+function sortFolderChildren(children: SidebarConfigItem[]): SidebarConfigItem[] {
+  return sortItems(children)
+}
+
+const sortedStructure = sortItems(sidebarConfig.structure as SidebarConfigItem[])
 
 /** Right-pointing chevron; rotate 90deg when open for down. */
 function ChevronIcon({ open }: { open: boolean }) {
@@ -37,18 +72,24 @@ function ChevronIcon({ open }: { open: boolean }) {
   )
 }
 
-export default function Sidebar({ nav, defaultWidthPx }: SidebarProps) {
+type SidebarProps = {
+  /** Initial width in px. Ignored after first user resize. */
+  defaultWidthPx?: number
+}
+
+export default function Sidebar({ defaultWidthPx }: SidebarProps) {
   const pathname = usePathname()
-  // Which top-level folders are expanded (e.g. "foundations", "components")
   const [openFolderIds, setOpenFolderIds] = useState<Set<string>>(() => new Set())
-  // Sidebar width in px; controllable via resize handle or defaultWidthPx
   const [widthPx, setWidthPx] = useState(defaultWidthPx ?? SIDEBAR_DEFAULT_WIDTH_PX)
 
-  const selectedFolderId = nav.some((f) => pathname.startsWith(`/content/${f.category}`))
-    ? nav.find((f) => pathname.startsWith(`/content/${f.category}`))?.category ?? null
+  const selectedFolderId = sortedStructure.some(
+    (item) => item.type === 'folder' && pathname.startsWith(`/content/${item.path}`)
+  )
+    ? (sortedStructure.find(
+        (item) => item.type === 'folder' && pathname.startsWith(`/content/${item.path}`)
+      ) as SidebarConfigFolder | undefined)?.path ?? null
     : null
 
-  // When a folder is selected (user is on a page under that category), open only that folder
   useEffect(() => {
     if (selectedFolderId) {
       setOpenFolderIds(new Set([selectedFolderId]))
@@ -73,15 +114,80 @@ export default function Sidebar({ nav, defaultWidthPx }: SidebarProps) {
     window.addEventListener('mouseup', onUp)
   }, [widthPx])
 
-  function toggleFolder(folderId: string) {
+  function toggleFolder(folderPath: string) {
     setOpenFolderIds((prev) => {
-      if (prev.has(folderId)) {
+      if (prev.has(folderPath)) {
         const next = new Set(prev)
-        next.delete(folderId)
+        next.delete(folderPath)
         return next
       }
-      return new Set([folderId])
+      return new Set([folderPath])
     })
+  }
+
+  function renderItem(item: SidebarConfigItem, depth: number): React.ReactNode {
+    if (item.type === 'divider') {
+      return (
+        <hr
+          key={`divider-${depth}-${item.order ?? ''}`}
+          className="my-2 border-gray-300"
+          data-sidebar="divider"
+        />
+      )
+    }
+    if (item.type === 'page') {
+      const href = `/content/${item.path}`
+      const isPageSelected = pathname === href
+      return (
+        <Link
+          key={item.path}
+          href={href}
+          data-sidebar="content-link"
+          className={`block py-0.5 px-3 text-sm hover:bg-gray-200 rounded ${isPageSelected ? 'text-blue-500 font-medium' : ''}`}
+        >
+          {getLabel(item.path)}
+        </Link>
+      )
+    }
+    // folder
+    const isFolderOpen = openFolderIds.has(item.path)
+    const isSelected = selectedFolderId === item.path
+    const folderLabelClass = isSelected
+      ? 'font-medium text-black'
+      : isFolderOpen
+        ? 'font-bold text-black'
+        : 'font-medium text-gray-700'
+    const sortedChildren = sortFolderChildren(item.children)
+    return (
+      <div
+        key={item.path}
+        data-sidebar="folder-block"
+        className={depth === 0 ? '' : 'mt-2'}
+      >
+        <button
+          type="button"
+          onClick={() => toggleFolder(item.path)}
+          data-sidebar="folder-header"
+          className={`flex w-full items-center gap-1 text-sm mb-0.5 py-0.5 px-0.5 rounded hover:bg-gray-300/80 ${folderLabelClass}`}
+        >
+          <span className="text-gray-500 select-none inline-flex shrink-0">
+            <ChevronIcon open={isFolderOpen} />
+          </span>
+          <span>{getLabel(item.path)}</span>
+        </button>
+        <div
+          className="grid transition-[grid-template-rows] duration-200 ease-out"
+          style={{ gridTemplateRows: isFolderOpen ? '1fr' : '0fr' }}
+        >
+          <div
+            data-sidebar="folder-contents"
+            className="min-h-0 overflow-hidden pl-4"
+          >
+            {sortedChildren.map((child) => renderItem(child, depth + 1))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -89,154 +195,45 @@ export default function Sidebar({ nav, defaultWidthPx }: SidebarProps) {
       className="flex shrink-0 relative"
       style={{ width: widthPx }}
     >
-      <div
-        className="
-          w-full
-          h-full
-          bg-gray-100
-          overflow-auto
-        "
-      >
-      <div
-        className="
-          p-2.5
-          pt-20
-        "
-      >
-        {/* space-y-8 = more gap between folder blocks */}
-        <nav className="space-y-4">
-          {/* Top-level folders (e.g. Foundation, Component, UI Pattern) */}
-          {nav.map((folder) => {
-            const isFolderOpen = openFolderIds.has(folder.category)
-            const isSelected = selectedFolderId === folder.category
-            const folderLabelClass = isSelected
-              ? 'font-medium text-black'
-              : isFolderOpen
-                ? 'font-bold text-black'
-                : 'font-medium text-gray-700'
-            return (
+      <div className="w-full h-full bg-gray-100 overflow-auto">
+        <div className="p-2.5 pt-20">
+          <nav className="space-y-4">
+            {sortedStructure.map((item, index) => (
               <div
-                key={folder.category}
-                data-sidebar="folder-block"
-                className={
-                  folder.category === 'foundations'
-                    ? ''
-                    : 'mt-4'
-                    
-                }
+                key={item.type === 'divider' ? `divider-${index}` : (item as SidebarConfigFolder).path}
+                className={index === 0 ? '' : 'mt-4'}
               >
-                {/* Folder header: click to expand/collapse */}
-                <button
-                  type="button"
-                  onClick={() => toggleFolder(folder.category)}
-                  data-sidebar="folder-header"
-                  className={`flex w-full items-center gap-1 text-sm mb-0.5 py-0.5 px-0.5 rounded hover:bg-gray-300/80 ${folderLabelClass}`}
-                >
-                  <span
-                    className="
-                      text-gray-500
-                      select-none
-                      inline-flex
-                      shrink-0
-                    "
-                  >
-                    <ChevronIcon open={isFolderOpen} />
-                  </span>
-                  <span>{folder.label}</span>
-                </button>
-                {/* Contents under this folder (e.g. Color, Typography under Foundation) */}
-                <div
-                  className="grid transition-[grid-template-rows] duration-200 ease-out"
-                  style={{ gridTemplateRows: isFolderOpen ? '1fr' : '0fr' }}
-                >
-                  <div
-                    data-sidebar="folder-contents"
-                    className="min-h-0 overflow-hidden pl-4"
-                  >
-                    {folder.files.map((contentItem) => {
-                      const href = `/content/${folder.category}/${contentItem.slug}`
-                      const isPageSelected = pathname === href
-                      return (
-                        <Link
-                          key={contentItem.slug}
-                          href={href}
-                          data-sidebar="content-link"
-                          className={`block py-0.5 px-3 text-sm hover:bg-gray-200 rounded ${isPageSelected ? 'text-blue-500 font-medium' : ''}`}
-                        >
-                          {contentItem.label}
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
+                {renderItem(item, 0)}
               </div>
-            )
-          })}
+            ))}
 
-          {/* Admin section (not a content folder) */}
-          <div
-            data-sidebar="admin-block"
-            className="
-              mt-6
-              pt-4
-              border-t
-            "
-          >
+            {/* Admin section (not from config) */}
             <div
-              className="
-                font-semibold
-                text-sm
-                text-gray-600
-                mb-2
-              "
+              data-sidebar="admin-block"
+              className="mt-6 pt-4 border-t border-gray-300"
             >
-              Admin
+              <div className="font-semibold text-sm text-gray-600 mb-2">Admin</div>
+              <Link
+                href="/schemas"
+                className="block py-2 px-3 text-sm hover:bg-gray-200 rounded"
+              >
+                Schemas
+              </Link>
+              <Link
+                href="/validate"
+                className="block py-2 px-3 text-sm hover:bg-gray-200 rounded"
+              >
+                Validation
+              </Link>
             </div>
-            <Link
-              href="/schemas"
-              className="
-                block
-                py-2
-                px-3
-                text-sm
-                hover:bg-gray-200
-                rounded
-              "
-            >
-              Schemas
-            </Link>
-            <Link
-              href="/validate"
-              className="
-                block
-                py-2
-                px-3
-                text-sm
-                hover:bg-gray-200
-                rounded
-              "
-            >
-              Validation
-            </Link>
-          </div>
-        </nav>
+          </nav>
+        </div>
       </div>
-      </div>
-      {/* Resize handle: drag to change sidebar width */}
       <button
         type="button"
         aria-label="Resize sidebar"
         onMouseDown={startResize}
-        className="
-          absolute
-          right-0
-          top-0
-          bottom-0
-          w-1.5
-          cursor-col-resize
-          hover:bg-gray-300
-          active:bg-gray-400
-        "
+        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-gray-300 active:bg-gray-400"
       />
     </div>
   )
