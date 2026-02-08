@@ -128,7 +128,7 @@ function getItemAtPath(structure: SidebarConfigItem[], path: number[]): SidebarC
 
 export default function AdminSidebarPage() {
   const [structure, setStructure] = useState<SidebarConfigItem[]>(initialStructure)
-  const [openFolderPath, setOpenFolderPath] = useState<number[] | null>(null)
+  const [openFolderSet, setOpenFolderSet] = useState<Set<string>>(() => new Set())
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
   const [configLoading, setConfigLoading] = useState(true)
@@ -166,9 +166,38 @@ export default function AdminSidebarPage() {
     }
   }, [refetchStructure])
 
-  const toggleFolder = useCallback((path: number[]) => {
-    setOpenFolderPath((prev) => (pathEquals(prev, path) ? null : path))
-  }, [])
+  const pathToKey = (path: number[]) => path.join('-')
+
+  const isFolderOpen = useCallback(
+    (path: number[]) => {
+      const key = pathToKey(path)
+      if (openFolderSet.has(key)) return true
+      return Array.from(openFolderSet).some((k) => k.startsWith(key + '-'))
+    },
+    [openFolderSet]
+  )
+
+  const toggleFolder = useCallback(
+    (path: number[]) => {
+      const key = pathToKey(path)
+      setOpenFolderSet((prev) => {
+        const next = new Set(prev)
+        if (next.has(key)) {
+          next.delete(key)
+          return next
+        }
+        next.add(key)
+        for (let i = 1; i < path.length; i++) next.add(pathToKey(path.slice(0, i)))
+        const parentPath = path.slice(0, -1)
+        const siblingArr = getArrayAtPath(structure, parentPath)
+        siblingArr.forEach((_, i) => {
+          if (i !== path[path.length - 1]) next.delete(pathToKey(parentPath.concat(i)))
+        })
+        return next
+      })
+    },
+    [structure]
+  )
 
   const getSiblingArray = useCallback(
     (path: number[]) => {
@@ -326,7 +355,12 @@ export default function AdminSidebarPage() {
       }
       setMessage({ type: 'ok', text: 'Folder created. Refreshing…' })
       await refetchStructure()
-      setOpenFolderPath(folderPath)
+      setOpenFolderSet((prev) => {
+        const next = new Set(prev)
+        next.add(pathToKey(folderPath))
+        for (let i = 1; i < folderPath.length; i++) next.add(pathToKey(folderPath.slice(0, i)))
+        return next
+      })
       // If refetch didn't include the new subfolder (nested folders), add it locally
       setStructure((prev) => {
         const existing = getItemAtPath(prev, folderPath)
@@ -404,7 +438,12 @@ export default function AdminSidebarPage() {
       }
       setMessage({ type: 'ok', text: 'Page created. Refreshing…' })
       await refetchStructure()
-      setOpenFolderPath(folderPath)
+      setOpenFolderSet((prev) => {
+        const next = new Set(prev)
+        next.add(pathToKey(folderPath))
+        for (let i = 1; i < folderPath.length; i++) next.add(pathToKey(folderPath.slice(0, i)))
+        return next
+      })
       setMessage({ type: 'ok', text: 'Page created. Click Save to update sidebar config.' })
     } catch (e) {
       setMessage({ type: 'err', text: e instanceof Error ? e.message : 'Failed to create page' })
@@ -542,7 +581,7 @@ export default function AdminSidebarPage() {
           <ItemList
             items={structure}
             pathPrefix={[]}
-            openFolderPath={openFolderPath}
+            isFolderOpen={isFolderOpen}
             toggleFolder={toggleFolder}
             getSiblingArray={getSiblingArray}
             moveByDrag={moveByDrag}
@@ -666,7 +705,7 @@ function getItemTransitionName(item: SidebarConfigItem, pathPrefix: number[]): s
 function ItemList({
   items,
   pathPrefix,
-  openFolderPath,
+  isFolderOpen,
   toggleFolder,
   getSiblingArray,
   moveByDrag,
@@ -684,7 +723,7 @@ function ItemList({
 }: {
   items: SidebarConfigItem[]
   pathPrefix: number[]
-  openFolderPath: number[] | null
+  isFolderOpen: (path: number[]) => boolean
   toggleFolder: (path: number[]) => void
   getSiblingArray: (path: number[]) => SidebarConfigItem[]
   moveByDrag: (path: number[], dropIndex: number) => void
@@ -720,9 +759,8 @@ function ItemList({
         const canPin = item.type !== 'divider' && depth > 0
         const isFolderWithContents = item.type === 'folder' && item.children.length > 0
         const canDelete = !isFolderWithContents
-        const isFolderOpen =
-          item.type === 'folder' &&
-          (pathEquals(openFolderPath, path) || pathIsPrefixOf(path, openFolderPath))
+        const folderIsOpen =
+          item.type === 'folder' && isFolderOpen(path)
         const canDrop = showHandle && draggedItem && sameZone(draggedItem, item) && !isDragging(path)
 
         const handleDragOver = (e: React.DragEvent) => {
@@ -768,11 +806,11 @@ function ItemList({
                 type="button"
                 onClick={() => toggleFolder(path)}
                 className="flex shrink-0 w-6 h-6 items-center justify-center text-gray-500 hover:bg-gray-200 rounded"
-                aria-expanded={isFolderOpen}
-                aria-label={isFolderOpen ? 'Collapse folder' : 'Expand folder'}
+                aria-expanded={folderIsOpen}
+                aria-label={folderIsOpen ? 'Collapse folder' : 'Expand folder'}
               >
                 <span
-                  className={`inline-block transition-transform duration-200 ${isFolderOpen ? 'rotate-90' : ''}`}
+                  className={`inline-block transition-transform duration-200 ${folderIsOpen ? 'rotate-90' : ''}`}
                   aria-hidden
                 >
                   ▶
@@ -863,13 +901,13 @@ function ItemList({
                 onDrop={handleDrop}
               >
                 <div
-                  className={`flex items-center gap-2 py-2 px-3 ${isFolderOpen ? 'bg-green-50 rounded-t-lg' : 'hover:bg-gray-50'}`}
+                  className={`flex items-center gap-2 py-2 px-3 ${folderIsOpen ? 'bg-green-50 rounded-t-lg' : 'hover:bg-gray-50'}`}
                 >
                   {rowContent}
                 </div>
                 <div
                   className="grid transition-[grid-template-rows] duration-200 ease-out"
-                  style={{ gridTemplateRows: isFolderOpen ? '1fr' : '0fr' }}
+                  style={{ gridTemplateRows: folderIsOpen ? '1fr' : '0fr' }}
                 >
                   <div className="min-h-0 overflow-hidden">
                     <ul className="divide-y divide-gray-200 border-l border-gray-200 ml-4 mr-3 px-3 py-2 bg-green-50 rounded-b-lg overflow-hidden mb-3">
@@ -881,7 +919,7 @@ function ItemList({
                         <ItemList
                           items={item.children}
                           pathPrefix={path}
-                          openFolderPath={openFolderPath}
+                          isFolderOpen={isFolderOpen}
                           toggleFolder={toggleFolder}
                           getSiblingArray={getSiblingArray}
                           moveByDrag={moveByDrag}

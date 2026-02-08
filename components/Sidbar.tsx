@@ -107,19 +107,31 @@ export default function Sidebar({ defaultWidthPx }: SidebarProps) {
 
   const sortedStructure = structure.length > 0 ? sortToDisplayOrder(structure, true) : structure
 
-  const selectedFolderId = sortedStructure.some(
-    (item) => item.type === 'folder' && pathname.startsWith(`/content/${item.path}`)
-  )
-    ? (sortedStructure.find(
-        (item) => item.type === 'folder' && pathname.startsWith(`/content/${item.path}`)
-      ) as SidebarConfigFolder | undefined)?.path ?? null
-    : null
+  function collectFolderPaths(items: SidebarConfigItem[]): string[] {
+    const paths: string[] = []
+    for (const item of items) {
+      if (item.type === 'folder' && item.path) {
+        paths.push(item.path)
+        paths.push(...collectFolderPaths(item.children))
+      }
+    }
+    return paths
+  }
+  const allFolderPaths = collectFolderPaths(sortedStructure)
+  const pathPrefix = pathname.startsWith('/content/') ? pathname.slice('/content/'.length) : ''
+  const foldersToOpen = pathPrefix
+    ? allFolderPaths.filter((p) => pathPrefix === p || pathPrefix.startsWith(p + '/'))
+    : []
+  const selectedFolderId =
+    foldersToOpen.length > 0
+      ? foldersToOpen.reduce((a, b) => (a.length >= b.length ? a : b), '')
+      : null
 
   useEffect(() => {
-    if (selectedFolderId) {
-      setOpenFolderIds(new Set([selectedFolderId]))
+    if (foldersToOpen.length > 0) {
+      setOpenFolderIds(new Set(foldersToOpen))
     }
-  }, [selectedFolderId])
+  }, [pathname])
 
   const startResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -139,14 +151,28 @@ export default function Sidebar({ defaultWidthPx }: SidebarProps) {
     window.addEventListener('mouseup', onUp)
   }, [widthPx])
 
+  function getParentPath(folderPath: string): string {
+    return folderPath.includes('/') ? folderPath.replace(/\/[^/]+$/, '') : ''
+  }
+
   function toggleFolder(folderPath: string) {
     setOpenFolderIds((prev) => {
-      if (prev.has(folderPath)) {
-        const next = new Set(prev)
+      const next = new Set(prev)
+      if (next.has(folderPath)) {
         next.delete(folderPath)
         return next
       }
-      return new Set([folderPath])
+      next.add(folderPath)
+      let p = getParentPath(folderPath)
+      while (p) {
+        next.add(p)
+        p = getParentPath(p)
+      }
+      const parent = getParentPath(folderPath)
+      allFolderPaths.forEach((id) => {
+        if (id !== folderPath && getParentPath(id) === parent) next.delete(id)
+      })
+      return next
     })
   }
 

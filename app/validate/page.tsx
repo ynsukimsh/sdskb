@@ -7,26 +7,34 @@ export default function ValidatePage() {
   const schemasDir = path.join(process.cwd(), 'schemas')
   const contentDir = path.join(process.cwd(), 'content')
   
-  // Load schemas
+  // Load schemas (only files, skip subdirs)
   const schemas = new Map()
-  fs.readdirSync(schemasDir).forEach(file => {
+  const schemaFiles = fs.readdirSync(schemasDir).filter((f) =>
+    fs.statSync(path.join(schemasDir, f)).isFile()
+  )
+  schemaFiles.forEach((file) => {
     const content = fs.readFileSync(path.join(schemasDir, file), 'utf8')
     const schema: any = yaml.load(content)
-    schemas.set(schema.name, schema)
+    if (schema?.name) schemas.set(schema.name, schema)
   })
-  
-  // Validate content
+
+  // Validate content (only recurse into directories; root .md files have no schema category)
   const issues: any[] = []
-  const categories = fs.readdirSync(contentDir)
-  
-  categories.forEach(category => {
+  const categories = fs.readdirSync(contentDir).filter((name) =>
+    fs.statSync(path.join(contentDir, name)).isDirectory()
+  )
+
+  categories.forEach((category) => {
     const schema = schemas.get(category)
     if (!schema) return
-    
+
     const categoryPath = path.join(contentDir, category)
-    const files = fs.readdirSync(categoryPath)
-    
-    files.forEach(file => {
+    const entries = fs.readdirSync(categoryPath).filter((name) =>
+      fs.statSync(path.join(categoryPath, name)).isFile()
+    )
+
+    entries.forEach((file) => {
+      if (!file.endsWith('.md')) return
       const filePath = path.join(categoryPath, file)
       const fileContent = fs.readFileSync(filePath, 'utf8')
       const { data } = matter(fileContent)

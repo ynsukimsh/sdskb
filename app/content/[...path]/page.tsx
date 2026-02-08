@@ -2,30 +2,28 @@ import matter from 'gray-matter'
 import { notFound } from 'next/navigation'
 import { ContentPageClient } from '@/components/ContentPageClient'
 import { slugToLabel } from '@/lib/slug-to-label'
-import { fetchContentFromGitHub } from '@/lib/github-content'
+import { fetchContentByPath } from '@/lib/github-content'
 
 export const dynamic = 'force-dynamic'
 
 type Props = { params: Promise<{ path: string[] }> }
 
 /**
- * Handles both root-level (e.g. /content/solid) and category (e.g. /content/foundation/color) content.
- * path = ['solid'] → content/solid.md; path = ['foundation', 'color'] → content/foundation/color.md
+ * Handles content at any depth: /content/solid, /content/foundation/color, /content/foundation/colors/primary, etc.
+ * path = ['solid'] → content/solid.md; path = ['foundation','colors','primary'] → content/foundation/colors/primary.md
  * /content with no segments is handled by ../page.tsx
  */
 export default async function ContentPage({ params }: Props) {
   const { path: pathSegments } = await params
 
-  if (pathSegments.length !== 1 && pathSegments.length !== 2) {
-    notFound()
-  }
+  if (pathSegments.length < 1) notFound()
 
-  const category = pathSegments.length === 2 ? pathSegments[0] : null
-  const slug = pathSegments.length === 2 ? pathSegments[1]! : pathSegments[0]!
+  const category = pathSegments.length > 1 ? pathSegments.slice(0, -1).join('/') : ''
+  const slug = pathSegments[pathSegments.length - 1]!
 
   let raw: string
   try {
-    raw = await fetchContentFromGitHub(category, slug)
+    raw = await fetchContentByPath(pathSegments)
   } catch (err: unknown) {
     const code = err instanceof Error && 'code' in err ? (err as Error & { code: string }).code : undefined
     const status = err && typeof err === 'object' && 'status' in err ? (err as { status: number }).status : undefined
