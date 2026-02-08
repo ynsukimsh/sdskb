@@ -71,17 +71,6 @@ function pathEquals(a: number[] | null, b: number[]): boolean {
   return a.every((v, i) => v === b[i])
 }
 
-/** Collect content file paths (e.g. foundation/colors.md) for move-to-trash */
-function getContentPaths(item: SidebarConfigItem): string[] {
-  if (item.type === 'divider') return []
-  if (item.type === 'page') return [`${item.path}.md`]
-  const out: string[] = []
-  for (const child of item.children) {
-    out.push(...getContentPaths(child))
-  }
-  return out
-}
-
 function getItemAtPath(structure: SidebarConfigItem[], path: number[]): SidebarConfigItem | null {
   if (path.length === 0) return null
   let current: SidebarConfigItem[] = structure
@@ -166,50 +155,17 @@ export default function AdminSidebarPage() {
     [updateSiblingArray]
   )
 
-  const [moving, setMoving] = useState(false)
-
   const deleteItem = useCallback(
-    async (path: number[]) => {
+    (path: number[]) => {
       const item = getItemAtPath(structure, path)
       if (!item) return
       if (item.type === 'folder' && item.children.length > 0) {
         window.alert('Folders should have no contents to be deleted.')
         return
       }
-      const contentPaths = getContentPaths(item)
-      const willMoveFiles = contentPaths.length > 0
-      const message = willMoveFiles
-        ? `Move to trash? ${contentPaths.length} file(s) will be moved to content/trash and removed from the sidebar.`
-        : 'Remove this item from the sidebar? (No content files to move.)'
-      if (!window.confirm(message)) return
-
-      if (willMoveFiles) {
-        setMoving(true)
-        setMessage(null)
-        try {
-          for (const contentPath of contentPaths) {
-            const res = await fetch('/api/trash', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'move', contentPath }),
-            })
-            const data = await res.json()
-            if (!res.ok) {
-              setMessage({ type: 'err', text: data.error ?? 'Failed to move to trash' })
-              return
-            }
-          }
-          removeFromStructure(path)
-          setMessage({ type: 'ok', text: 'Moved to trash and removed from sidebar. Click Save to update config.' })
-        } catch (e) {
-          setMessage({ type: 'err', text: e instanceof Error ? e.message : 'Request failed' })
-        } finally {
-          setMoving(false)
-        }
-      } else {
-        removeFromStructure(path)
-        setMessage({ type: 'ok', text: 'Removed from sidebar. Click Save to update config.' })
-      }
+      if (!window.confirm('Remove this item from the sidebar?')) return
+      removeFromStructure(path)
+      setMessage({ type: 'ok', text: 'Removed from sidebar. Click Save to update config.' })
     },
     [structure, removeFromStructure]
   )
@@ -334,7 +290,6 @@ export default function AdminSidebarPage() {
             draggedItem={dragPath ? getItemAtPath(structure, dragPath) : null}
             deleteItem={deleteItem}
             togglePin={togglePin}
-            moving={moving}
           />
         </ul>
       </div>
@@ -432,7 +387,6 @@ function ItemList({
   draggedItem,
   deleteItem,
   togglePin,
-  moving,
 }: {
   items: SidebarConfigItem[]
   pathPrefix: number[]
@@ -448,7 +402,6 @@ function ItemList({
   draggedItem: SidebarConfigItem | null
   deleteItem: (path: number[]) => void
   togglePin: (path: number[]) => void
-  moving: boolean
 }) {
   const isDragging = (path: number[]) =>
     dragPath && path.length === dragPath.length && path.every((v, i) => v === dragPath[i])
@@ -554,10 +507,9 @@ function ItemList({
             <button
               type="button"
               onClick={() => deleteItem(path)}
-              disabled={moving}
-              className={`rounded p-1.5 inline-flex items-center justify-center disabled:pointer-events-none ${isFolderWithContents ? 'text-red-300 opacity-60' : 'text-red-600 hover:bg-red-50'}`}
-              aria-label="Delete (move to trash)"
-              title={isFolderWithContents ? 'Folders should have no contents to be deleted' : 'Delete (move to trash)'}
+              className={`rounded p-1.5 inline-flex items-center justify-center ${isFolderWithContents ? 'text-red-300 opacity-60' : 'text-red-600 hover:bg-red-50'}`}
+              aria-label="Remove from sidebar"
+              title={isFolderWithContents ? 'Folders should have no contents to be deleted' : 'Remove from sidebar'}
             >
               <TrashIcon />
             </button>
@@ -607,7 +559,6 @@ function ItemList({
                         draggedItem={draggedItem}
                         deleteItem={deleteItem}
                         togglePin={togglePin}
-                        moving={moving}
                       />
                     </ul>
                   </div>
