@@ -8,22 +8,8 @@
     },
     {
       "type": "folder",
-      "path": "uipatternsszzz",
-      "order": 2,
-      "pinned": false,
-      "children": [
-        {
-          "type": "page",
-          "path": "uipatternsszzz/example-pattern",
-          "order": 1,
-          "pinned": false
-        }
-      ]
-    },
-    {
-      "type": "folder",
       "path": "foundation",
-      "order": 3,
+      "order": 2,
       "pinned": false,
       "children": [
         {
@@ -49,7 +35,7 @@
     {
       "type": "folder",
       "path": "components",
-      "order": 4,
+      "order": 3,
       "pinned": false,
       "children": [
         {
@@ -81,7 +67,7 @@
     {
       "type": "folder",
       "path": "pop-ups",
-      "order": 5,
+      "order": 4,
       "pinned": false,
       "children": [
         {
@@ -89,6 +75,27 @@
           "path": "pop-ups/pop-upopps",
           "order": 1,
           "pinned": false
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "path": "uipattern",
+      "order": 5,
+      "pinned": false,
+      "children": [
+        {
+          "type": "page",
+          "path": "uipattern/example-pattern",
+          "order": 1,
+          "pinned": false
+        },
+        {
+          "type": "folder",
+          "path": "uipattern/test-folder",
+          "order": 2,
+          "pinned": false,
+          "children": []
         }
       ]
     }
