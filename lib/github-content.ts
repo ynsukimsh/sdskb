@@ -1,12 +1,13 @@
 import { createAppAuth } from '@octokit/auth-app'
 import { Octokit } from '@octokit/rest'
+import type { SidebarConfigFolder, SidebarConfigItem, SidebarConfigPage } from './sidebar-order'
 
 const owner =
   process.env.GITHUB_OWNER ?? process.env.GITHUB_REPO_OWNER ?? 'ynsukimsh'
 const repo =
   process.env.GITHUB_REPO ?? process.env.GITHUB_REPO_NAME ?? 'sdskb'
 
-function getOctokit(): Promise<Octokit> {
+export function getOctokit(): Promise<Octokit> {
   const token = process.env.GITHUB_TOKEN
   if (token) {
     return Promise.resolve(new Octokit({ auth: token }))
@@ -74,4 +75,75 @@ export async function fetchContentFromGitHub(
     if (err instanceof Error) throw err
     throw new Error(String(err))
   }
+}
+
+/** Preferred category order for sidebar; others follow alphabetically. */
+const CONTENT_CATEGORY_ORDER = ['foundation', 'components', 'uipattern']
+
+/**
+ * Fetches the content folder structure from GitHub (repos.getContent for 'content').
+ * Returns a tree of categories (folders) and markdown files (pages), matching SidebarConfigItem[].
+ * Filenames are converted to slugs (strip .md) and labels use slug-to-title conversion.
+ */
+export async function fetchContentStructureFromGitHub(): Promise<SidebarConfigItem[]> {
+  const octokit = await getOctokit()
+
+  const { data: contentEntries } = await octokit.repos.getContent({
+    owner,
+    repo,
+    path: 'content',
+  })
+
+  if (!Array.isArray(contentEntries)) {
+    return []
+  }
+
+  const categoryDirs = contentEntries
+    .filter((e): e is { name: string; path: string; type: string } => e.type === 'dir')
+    .map((e) => e.name)
+
+  const orderedCategories = [...categoryDirs].sort((a, b) => {
+    const ai = CONTENT_CATEGORY_ORDER.indexOf(a)
+    const bi = CONTENT_CATEGORY_ORDER.indexOf(b)
+    if (ai !== -1 && bi !== -1) return ai - bi
+    if (ai !== -1) return -1
+    if (bi !== -1) return 1
+    return a.localeCompare(b, undefined, { sensitivity: 'base' })
+  })
+
+  const structure: SidebarConfigItem[] = []
+  let order = 0
+
+  for (const category of orderedCategories) {
+    const { data: categoryEntries } = await octokit.repos.getContent({
+      owner,
+      repo,
+      path: `content/${category}`,
+    })
+
+    if (!Array.isArray(categoryEntries)) continue
+
+    const mdFiles = categoryEntries
+      .filter((e): e is { name: string } => e.type === 'file' && e.name.endsWith('.md'))
+      .map((e) => e.name.replace(/\.md$/, ''))
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+
+    const children: SidebarConfigPage[] = mdFiles.map((slug, i) => ({
+      type: 'page',
+      path: `${category}/${slug}`,
+      order: i + 1,
+      pinned: false,
+    }))
+
+    const folder: SidebarConfigFolder = {
+      type: 'folder',
+      path: category,
+      order: ++order,
+      pinned: false,
+      children,
+    }
+    structure.push(folder)
+  }
+
+  return structure
 }

@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useCallback, useEffect } from 'react'
-import sidebarConfig from '@/sidebar-config.json'
 import { sortToDisplayOrder, type SidebarConfigItem } from '@/lib/sidebar-order'
 
 const SIDEBAR_DEFAULT_WIDTH_PX = 192
@@ -23,8 +22,6 @@ function getLabel(path: string): string {
   const segment = path.split('/').pop() ?? path
   return slugToLabel(segment)
 }
-
-const sortedStructure = sortToDisplayOrder(sidebarConfig.structure as SidebarConfigItem[], true)
 
 /** Right-pointing chevron; rotate 90deg when open for down. */
 function ChevronIcon({ open }: { open: boolean }) {
@@ -55,8 +52,43 @@ type SidebarProps = {
 
 export default function Sidebar({ defaultWidthPx }: SidebarProps) {
   const pathname = usePathname()
+  const [structure, setStructure] = useState<SidebarConfigItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [openFolderIds, setOpenFolderIds] = useState<Set<string>>(() => new Set())
   const [widthPx, setWidthPx] = useState(defaultWidthPx ?? SIDEBAR_DEFAULT_WIDTH_PX)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    fetch('/api/content-structure')
+      .then(async (res) => {
+        const data = await res.json()
+        if (!res.ok) {
+          throw new Error(res.status === 500 && data?.error ? data.error : res.statusText)
+        }
+        return data
+      })
+      .then((data: { structure: SidebarConfigItem[] }) => {
+        if (!cancelled && Array.isArray(data.structure)) {
+          setStructure(data.structure)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load sidebar')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const sortedStructure = sortToDisplayOrder(structure, true)
 
   const selectedFolderId = sortedStructure.some(
     (item) => item.type === 'folder' && pathname.startsWith(`/content/${item.path}`)
@@ -174,7 +206,15 @@ export default function Sidebar({ defaultWidthPx }: SidebarProps) {
       <div className="w-full h-full bg-gray-100 overflow-auto">
         <div className="p-2.5 pt-20">
           <nav className="space-y-4">
-            {sortedStructure.map((item, index) => (
+            {loading && (
+              <div className="px-3 py-2 text-sm text-gray-500">Loading…</div>
+            )}
+            {error && (
+              <div className="px-3 py-2 text-sm text-red-600" role="alert">
+                {error}
+              </div>
+            )}
+            {!loading && !error && sortedStructure.map((item, index) => (
               <div
                 key={item.type === 'divider' ? `divider-${index}` : (item as SidebarConfigFolder).path}
                 className={index === 0 ? '' : 'mt-4'}

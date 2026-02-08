@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import sidebarConfig from '@/sidebar-config.json'
+import { fetchContentStructureFromGitHub } from '@/lib/github-content'
 import { sortToDisplayOrder, type SidebarConfigItem } from '@/lib/sidebar-order'
 
 /** Returns the path of the first page in display order (e.g. "information/solid"). Skips dividers. */
@@ -15,8 +15,10 @@ function getFirstPagePath(items: SidebarConfigItem[]): string | null {
   return null
 }
 
-export default function HomePage() {
-  const structure = sidebarConfig.structure as SidebarConfigItem[]
+export const dynamic = 'force-dynamic'
+
+export default async function HomePage() {
+  const structure = await fetchContentStructureFromGitHub()
   const sorted = sortToDisplayOrder(structure, true)
   const firstPath = getFirstPagePath(sorted)
 
