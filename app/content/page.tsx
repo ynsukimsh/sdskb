@@ -41,15 +41,6 @@ export default function ContentPage() {
                   <div key={item.file} className="border rounded p-4">
                     <h3 className="text-lg font-semibold">{item.data.name}</h3>
                     <p className="text-sm text-gray-600">{item.data.description}</p>
-                    {item.data.figmaLink && (
-                      <a 
-                        href={item.data.figmaLink} 
-                        className="text-blue-500 text-sm"
-                        target="_blank"
-                      >
-                        View in Figma →
-                      </a>
-                    )}
                   </div>
                 ))}
             </div>

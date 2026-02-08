@@ -4,12 +4,15 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
+import remarkBreaks from 'remark-breaks'
 import yaml from 'js-yaml'
 import { slugToLabel } from '@/lib/slug-to-label'
+import { FigmaPreview } from '@/components/FigmaPreview'
 
 export type ContentInitial = {
   name: string
   description: string
+  figma_url: string
   figmaLink: string
   do: string
   dont: string
@@ -61,9 +64,11 @@ type Props = {
   category: string
   slug: string
   initial: ContentInitial
+  /** When true, content is pull-only from git; Edit is hidden and save is disabled. */
+  contentReadOnly?: boolean
 }
 
-export function ContentPageClient({ category, slug, initial }: Props) {
+export function ContentPageClient({ category, slug, initial, contentReadOnly }: Props) {
   const router = useRouter()
   const [isEditMode, setIsEditMode] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -93,6 +98,7 @@ export function ContentPageClient({ category, slug, initial }: Props) {
       const frontmatter: Record<string, string> = {
         name: form.name,
         description: form.description,
+        figma_url: form.figma_url,
         figmaLink: form.figmaLink,
         do: form.do,
         dont: form.dont,
@@ -219,14 +225,15 @@ export function ContentPageClient({ category, slug, initial }: Props) {
             />
           </div>
           <div>
-            <label htmlFor="figmaLink" className="mb-1 block text-sm font-medium text-gray-700">
-              Figma link
+            <label htmlFor="figma_url" className="mb-1 block text-sm font-medium text-gray-700">
+              Figma Component Link
             </label>
             <input
-              id="figmaLink"
+              id="figma_url"
               type="url"
-              value={form.figmaLink}
-              onChange={(e) => updateForm({ figmaLink: e.target.value })}
+              value={form.figma_url}
+              onChange={(e) => updateForm({ figma_url: e.target.value })}
+              placeholder="https://www.figma.com/design/...?node-id=..."
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
             />
           </div>
@@ -273,15 +280,17 @@ export function ContentPageClient({ category, slug, initial }: Props) {
 
   return (
     <article className="max-w-3xl mx-auto relative">
-      <div className="absolute top-0 right-0">
-        <button
-          type="button"
-          onClick={startEdit}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-        >
-          Edit
-        </button>
-      </div>
+      {!contentReadOnly && (
+        <div className="absolute top-0 right-0">
+          <button
+            type="button"
+            onClick={startEdit}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          >
+            Edit
+          </button>
+        </div>
+      )}
       {message && (
         <p
           className={`mb-4 text-sm font-medium ${
@@ -291,7 +300,7 @@ export function ContentPageClient({ category, slug, initial }: Props) {
           {message.text}
         </p>
       )}
-      <header className="mb-8 pr-24">
+      <header className={`mb-8 ${contentReadOnly ? '' : 'pr-24'}`}>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
         {display.heroImage && (
           <div className="mt-4 mb-6 -mx-0 overflow-hidden rounded-xl">
@@ -308,38 +317,35 @@ export function ContentPageClient({ category, slug, initial }: Props) {
         {display.description && (
           <p className="text-lg text-gray-600 leading-relaxed">{display.description}</p>
         )}
-        {display.figmaLink && (
-          <a
-            href={display.figmaLink}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            View in Figma
-            <span aria-hidden>→</span>
-          </a>
+        {(display.figma_url || display.figmaLink) && (
+          <div className="mt-4">
+            <FigmaPreview
+              figmaUrl={display.figma_url || display.figmaLink}
+              alt={display.name}
+            />
+          </div>
         )}
       </header>
 
       {hasDoDont && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <div className="flex flex-col gap-6 mb-8">
           {display.do && (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-              <h3 className="text-sm font-semibold text-green-800 mb-2">Do</h3>
-              <p className="text-sm text-green-900">{display.do}</p>
+            <div>
+              <h3 className="text-2xl font-semibold text-green-600 mb-2">Do</h3>
+              <p className="text-base text-gray-700 whitespace-pre-line leading-relaxed">{display.do}</p>
             </div>
           )}
           {display.dont && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-              <h3 className="text-sm font-semibold text-red-800 mb-2">Don&apos;t</h3>
-              <p className="text-sm text-red-900">{display.dont}</p>
+            <div>
+              <h3 className="text-2xl font-semibold text-red-600 mb-2">Don&apos;t</h3>
+              <p className="text-base text-gray-700 whitespace-pre-line leading-relaxed">{display.dont}</p>
             </div>
           )}
         </div>
       )}
 
-      <div className="content-markdown">
-        <ReactMarkdown components={markdownComponents}>
+      <div className="content-markdown border-t border-gray-200 pt-6 mt-2">
+        <ReactMarkdown remarkPlugins={[remarkBreaks]} components={markdownComponents}>
           {(display.body || '').trim()}
         </ReactMarkdown>
       </div>

@@ -7,6 +7,10 @@ fields:
   - name: description
     type: text
     required: false
+  - name: figma_url
+    type: url
+    label: Figma Component Link
+    required: false
   - name: figmaLink
     type: url
     required: false

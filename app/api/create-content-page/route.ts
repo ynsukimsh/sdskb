@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
     const frontmatter = `---
 name: ${nameYaml}
 description: ''
+figma_url: ''
 figmaLink: ''
 do: ''
 dont: ''

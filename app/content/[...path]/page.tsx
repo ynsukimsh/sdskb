@@ -36,6 +36,7 @@ export default async function ContentPage({ params }: Props) {
   const initial = {
     name: (data?.name as string) ?? (data?.title as string) ?? fileLabel,
     description: (data?.description as string) ?? '',
+    figma_url: (data?.figma_url as string) ?? '',
     figmaLink: (data?.figmaLink as string) ?? '',
     do: (data?.do as string) ?? '',
     dont: (data?.dont as string) ?? '',
@@ -43,11 +44,14 @@ export default async function ContentPage({ params }: Props) {
     heroImage: (data?.image as string) ?? '',
   }
 
+  const contentReadOnly = process.env.CONTENT_READ_ONLY === 'true'
+
   return (
     <ContentPageClient
       category={category ?? ''}
       slug={slug}
       initial={initial}
+      contentReadOnly={contentReadOnly}
     />
   )
 }
