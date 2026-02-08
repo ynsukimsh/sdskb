@@ -20,7 +20,7 @@
           "children": [
             {
               "type": "page",
-              "path": "components/buttons/bottom-sheets",
+              "path": "components/buttons/boxbutton",
               "order": 1,
               "pinned": false
             },
