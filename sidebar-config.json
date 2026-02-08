@@ -8,94 +8,89 @@
     },
     {
       "type": "folder",
-      "path": "foundation",
+      "path": "components",
       "order": 2,
       "pinned": false,
       "children": [
         {
-          "type": "page",
-          "path": "foundation/color",
+          "type": "folder",
+          "path": "components/buttons",
           "order": 1,
-          "pinned": false
+          "pinned": true,
+          "children": [
+            {
+              "type": "page",
+              "path": "components/buttons/bottom-sheets",
+              "order": 1,
+              "pinned": false
+            },
+            {
+              "type": "page",
+              "path": "components/buttons/pop-up",
+              "order": 2,
+              "pinned": false
+            }
+          ]
         },
         {
-          "type": "page",
-          "path": "foundation/colors",
+          "type": "folder",
+          "path": "components/tabBar",
           "order": 2,
-          "pinned": false
-        },
-        {
-          "type": "page",
-          "path": "foundation/typography",
-          "order": 3,
-          "pinned": false
-        }
-      ]
-    },
-    {
-      "type": "folder",
-      "path": "components",
-      "order": 3,
-      "pinned": false,
-      "children": [
-        {
-          "type": "page",
-          "path": "components/bottom-sheets",
-          "order": 1,
-          "pinned": false
-        },
-        {
-          "type": "page",
-          "path": "components/pop-up",
-          "order": 2,
-          "pinned": false
+          "pinned": true,
+          "children": [
+            {
+              "type": "page",
+              "path": "components/tabBar/tab-bars-icon",
+              "order": 1,
+              "pinned": false
+            },
+            {
+              "type": "page",
+              "path": "components/tabBar/tab-bars-text",
+              "order": 2,
+              "pinned": false
+            }
+          ]
         },
         {
           "type": "page",
           "path": "components/tab-bars-chip",
           "order": 3,
           "pinned": false
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "path": "foundations",
+      "order": 3,
+      "pinned": false,
+      "children": [
+        {
+          "type": "page",
+          "path": "foundations/colors",
+          "order": 1,
+          "pinned": false
         },
         {
           "type": "page",
-          "path": "components/tab-bars-text",
-          "order": 4,
+          "path": "foundations/typography",
+          "order": 2,
           "pinned": false
         }
       ]
     },
     {
       "type": "folder",
-      "path": "pop-ups",
+      "path": "modules",
       "order": 4,
       "pinned": false,
       "children": [
         {
           "type": "page",
-          "path": "pop-ups/pop-upopps",
+          "path": "modules/example-pattern",
           "order": 1,
           "pinned": false
-        }
-      ]
-    },
-    {
-      "type": "folder",
-      "path": "uipattern",
-      "order": 5,
-      "pinned": false,
-      "children": [
-        {
-          "type": "page",
-          "path": "uipattern/example-pattern",
-          "order": 1,
-          "pinned": false
-        },
-        {
-          "type": "folder",
-          "path": "uipattern/test-folder",
-          "order": 2,
-          "pinned": false,
-          "children": []
         }
       ]
     }
