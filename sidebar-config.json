@@ -1,9 +1,15 @@
 {
   "structure": [
     {
+      "type": "page",
+      "path": "solid-design-2",
+      "order": 1,
+      "pinned": false
+    },
+    {
       "type": "folder",
       "path": "components",
-      "order": 1,
+      "order": 2,
       "pinned": false,
       "children": [
         {
@@ -29,7 +35,7 @@
     {
       "type": "folder",
       "path": "uipattern",
-      "order": 2,
+      "order": 3,
       "pinned": false,
       "children": [
         {
@@ -46,12 +52,6 @@
           "children": []
         }
       ]
-    },
-    {
-      "type": "page",
-      "path": "solid-design-2",
-      "order": 3,
-      "pinned": false
     },
     {
       "type": "folder",
