@@ -1,5 +1,5 @@
 ---
-name: Tab Bars - Chip Type
+name: Tab Bars - Chip Typebibibibibibibi
 description: Chip-style tab navigation
 figmaLink: https://figma.com/file/example-tab-bars-chip
 do: Use for filter or category selection
