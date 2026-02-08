@@ -14,6 +14,6 @@ do: |-
 dont: SOL 브랜드의 서비스는 두가지 색상 외에 사용 불가
 ---
 
-# Bottom Sheets
+# 추가 정보를 적을 수 있는 곳
 
-Additional documentation about bottom sheets component...
+자유롭게 메모를 마크다운으로 할 수 있는 곳
