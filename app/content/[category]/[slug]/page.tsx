@@ -3,6 +3,7 @@ import path from 'path'
 import matter from 'gray-matter'
 import { notFound } from 'next/navigation'
 import { ContentPageClient } from '@/components/ContentPageClient'
+import { slugToLabel } from '@/lib/slug-to-label'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,8 +16,9 @@ export default async function ContentSlugPage({ params }: Props) {
 
   const raw = fs.readFileSync(filePath, 'utf8')
   const { data, content } = matter(raw)
+  const fileLabel = slugToLabel(slug)
   const initial = {
-    name: (data?.name as string) ?? (data?.title as string) ?? '',
+    name: (data?.name as string) ?? (data?.title as string) ?? fileLabel,
     description: (data?.description as string) ?? '',
     figmaLink: (data?.figmaLink as string) ?? '',
     do: (data?.do as string) ?? '',

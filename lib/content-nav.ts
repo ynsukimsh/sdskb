@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { slugToLabel } from './slug-to-label'
 
 const CONTENT_DIR = 'content'
 const CATEGORY_ORDER = ['foundations', 'components', 'uipattern']
@@ -7,13 +8,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   foundations: 'Foundation',
   components: 'Component',
   uipattern: 'UI Pattern',
-}
-
-function slugToLabel(slug: string): string {
-  return slug
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
 }
 
 export type ContentNavSection = {

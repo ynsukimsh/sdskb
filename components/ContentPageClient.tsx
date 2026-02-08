@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
 import yaml from 'js-yaml'
+import { slugToLabel } from '@/lib/slug-to-label'
 
 export type ContentInitial = {
   name: string
@@ -71,7 +72,7 @@ export function ContentPageClient({ category, slug, initial }: Props) {
   const [lastSaved, setLastSaved] = useState<ContentInitial | null>(null)
 
   const display = lastSaved ?? initial
-  const title = display.name || slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  const title = slugToLabel(slug)
   const hasDoDont = display.do || display.dont
 
   const startEdit = () => {
@@ -135,7 +136,7 @@ export function ContentPageClient({ category, slug, initial }: Props) {
 
   if (isEditMode) {
     return (
-      <article className="max-w-3xl">
+      <article className="max-w-3xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">Edit content</h2>
           {message && (
@@ -250,7 +251,7 @@ export function ContentPageClient({ category, slug, initial }: Props) {
   }
 
   return (
-    <article className="max-w-3xl relative">
+    <article className="max-w-3xl mx-auto relative">
       <div className="absolute top-0 right-0">
         <button
           type="button"
