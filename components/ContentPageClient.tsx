@@ -160,121 +160,143 @@ export function ContentPageClient({ category, slug, initial, contentReadOnly }: 
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isEditMode])
 
+  const inputBase =
+    'w-full rounded-xl border-0 bg-white/80 px-4 py-3 text-[15px] text-gray-900 placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-colors'
+  const labelClass = 'text-[13px] font-medium text-gray-500 uppercase tracking-wide mb-2 block'
+
   if (isEditMode) {
     return (
-      <article className="max-w-3xl mx-auto">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-gray-900">Edit content</h2>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={save}
-              disabled={saving}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-60"
-            >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
+      <div className="min-h-full bg-gray-100 -m-8 -mt-24 pt-24 px-8 pb-8">
+        <article className="max-w-2xl mx-auto font-[family-name:var(--font-sans,-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Segoe_UI',sans-serif)]">
+        {/* Bar: Title left, Cancel / Save right */}
+        <div className="sticky shadow-xl shadow-gray-800/5 top-0 z-10 -mx-2 flex items-center justify-between gap-4 rounded-2xl bg-gray-100/40 px-4 py-3 backdrop-blur-xl">
+          <input
+            type="text"
+            value={form.name}
+            onChange={(e) => updateForm({ name: e.target.value })}
+            placeholder="Untitled"
+            className="min-w-0 flex-1 ml-3 rounded-none border-0 border-b border-transparent bg-transparent py-0.5 text-[17px] font-semibold text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-0"
+            id="edit-name"
+            aria-label="Content name"
+          />
+          <div className="flex items-center gap-6">
             <button
               type="button"
               onClick={cancelEdit}
               disabled={saving}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-60"
+              className="text-[17px] font-light text-gray-900 hover:opacity-70 active:opacity-60 disabled:opacity-50 focus:outline-none"
             >
               Cancel
             </button>
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="text-[17px] font-semibold text-blue-500 hover:opacity-80 active:opacity-70 disabled:opacity-50 focus:outline-none"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
           </div>
         </div>
+
         {message && (
-          <p
-            className={`mb-4 text-sm font-medium ${
-              message.type === 'success' ? 'text-green-600' : 'text-red-600'
+          <div
+            className={`mt-4 rounded-2xl px-4 py-3 text-[15px] ${
+              message.type === 'success'
+                ? 'bg-[#e8f5e9] text-[#1b5e20]'
+                : 'bg-[#ffebee] text-[#b71c1c]'
             }`}
           >
             {message.text}
-          </p>
+          </div>
         )}
+
         <form
-          className="space-y-6"
+          className="mt-6 space-y-6"
           onSubmit={(e) => {
             e.preventDefault()
             save()
           }}
         >
-          <div>
-            <label htmlFor="name" className="mb-1 block text-sm font-medium text-gray-700">
-              Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              value={form.name}
-              onChange={(e) => updateForm({ name: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
-            />
+          {/* Group: Basic info — iOS inset group style */}
+          <div className="rounded-2xl bg-[#f2f2f7] p-2">
+            <div className="rounded-xl bg-white px-4 py-3 shadow-sm">
+              <label htmlFor="description" className={labelClass}>
+                Description
+              </label>
+              <textarea
+                id="description"
+                rows={3}
+                value={form.description}
+                onChange={(e) => updateForm({ description: e.target.value })}
+                className={`${inputBase} resize-none`}
+              />
+            </div>
           </div>
-          <div>
-            <label htmlFor="description" className="mb-1 block text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <textarea
-              id="description"
-              rows={3}
-              value={form.description}
-              onChange={(e) => updateForm({ description: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
-            />
+
+          {/* Group: Figma */}
+          <div className="rounded-2xl bg-[#f2f2f7] p-2">
+            <div className="rounded-xl bg-white px-4 py-3 shadow-sm">
+              <label htmlFor="figma_url" className={labelClass}>
+                Figma component link
+              </label>
+              <input
+                id="figma_url"
+                type="url"
+                value={form.figma_url}
+                onChange={(e) => updateForm({ figma_url: e.target.value })}
+                placeholder="https://www.figma.com/design/...?node-id=..."
+                className={inputBase}
+              />
+            </div>
           </div>
-          <div>
-            <label htmlFor="figma_url" className="mb-1 block text-sm font-medium text-gray-700">
-              Figma Component Link
-            </label>
-            <input
-              id="figma_url"
-              type="url"
-              value={form.figma_url}
-              onChange={(e) => updateForm({ figma_url: e.target.value })}
-              placeholder="https://www.figma.com/design/...?node-id=..."
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
-            />
+
+          {/* Group: Do / Don't */}
+          <div className="rounded-2xl bg-[#f2f2f7] p-2">
+            <div className="rounded-xl bg-white px-4 py-3 shadow-sm">
+              <label htmlFor="do" className={labelClass}>
+                Do
+              </label>
+              <textarea
+                id="do"
+                rows={2}
+                value={form.do}
+                onChange={(e) => updateForm({ do: e.target.value })}
+                className={`${inputBase} resize-none`}
+              />
+            </div>
+            <div className="mt-2 rounded-xl bg-white px-4 py-3 shadow-sm">
+              <label htmlFor="dont" className={labelClass}>
+                Don&apos;t
+              </label>
+              <textarea
+                id="dont"
+                rows={2}
+                value={form.dont}
+                onChange={(e) => updateForm({ dont: e.target.value })}
+                className={`${inputBase} resize-none`}
+              />
+            </div>
           </div>
-          <div>
-            <label htmlFor="do" className="mb-1 block text-sm font-medium text-gray-700">
-              Do
-            </label>
-            <textarea
-              id="do"
-              rows={2}
-              value={form.do}
-              onChange={(e) => updateForm({ do: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="dont" className="mb-1 block text-sm font-medium text-gray-700">
-              Don&apos;t
-            </label>
-            <textarea
-              id="dont"
-              rows={2}
-              value={form.dont}
-              onChange={(e) => updateForm({ dont: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="body" className="mb-1 block text-sm font-medium text-gray-700">
-              Content (Markdown)
-            </label>
-            <textarea
-              id="body"
-              rows={16}
-              value={form.body}
-              onChange={(e) => updateForm({ body: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
-            />
+
+          {/* Group: Content */}
+          <div className="rounded-2xl bg-[#f2f2f7] p-2">
+            <div className="rounded-xl bg-white px-4 py-3 shadow-sm">
+              <label htmlFor="body" className={labelClass}>
+                Content (Markdown)
+              </label>
+              <textarea
+                id="body"
+                rows={16}
+                value={form.body}
+                onChange={(e) => updateForm({ body: e.target.value })}
+                className={`${inputBase} font-mono text-[14px] resize-none`}
+              />
+            </div>
           </div>
         </form>
-      </article>
+        </article>
+      </div>
     )
   }
 
@@ -285,7 +307,7 @@ export function ContentPageClient({ category, slug, initial, contentReadOnly }: 
           <button
             type="button"
             onClick={startEdit}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            className="rounded-xl bg-[#f2f2f7] px-4 py-2.5 text-[15px] font-medium text-blue-500 hover:bg-[#e5e5ea] active:bg-[#d1d1d6] focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-colors"
           >
             Edit
           </button>
