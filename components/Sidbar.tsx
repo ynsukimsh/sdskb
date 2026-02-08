@@ -4,21 +4,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useCallback, useEffect } from 'react'
 import sidebarConfig from '@/sidebar-config.json'
+import { sortToDisplayOrder, type SidebarConfigItem } from '@/lib/sidebar-order'
 
 const SIDEBAR_DEFAULT_WIDTH_PX = 192
 const SIDEBAR_MIN_WIDTH_PX = 160
 const SIDEBAR_MAX_WIDTH_PX = 400
 
-type SidebarConfigPage = { type: 'page'; path: string; order: number; pinned: boolean }
-type SidebarConfigFolder = {
-  type: 'folder'
-  path: string
-  order: number
-  pinned: boolean
-  children: SidebarConfigItem[]
-}
-type SidebarConfigDivider = { type: 'divider'; order?: number }
-type SidebarConfigItem = SidebarConfigPage | SidebarConfigFolder | SidebarConfigDivider
+type SidebarConfigFolder = Extract<SidebarConfigItem, { type: 'folder' }>
 
 function slugToLabel(slug: string): string {
   return slug
@@ -32,23 +24,7 @@ function getLabel(path: string): string {
   return slugToLabel(segment)
 }
 
-function sortItems(items: SidebarConfigItem[]): SidebarConfigItem[] {
-  return [...items].sort((a, b) => {
-    if (a.type === 'divider' && b.type === 'divider') return (a.order ?? 0) - (b.order ?? 0)
-    if (a.type === 'divider') return 1
-    if (b.type === 'divider') return -1
-    const aPinned = 'pinned' in a && a.pinned ? 1 : 0
-    const bPinned = 'pinned' in b && b.pinned ? 1 : 0
-    if (bPinned !== aPinned) return bPinned - aPinned
-    return ('order' in a ? a.order : 0) - ('order' in b ? b.order : 0)
-  })
-}
-
-function sortFolderChildren(children: SidebarConfigItem[]): SidebarConfigItem[] {
-  return sortItems(children)
-}
-
-const sortedStructure = sortItems(sidebarConfig.structure as SidebarConfigItem[])
+const sortedStructure = sortToDisplayOrder(sidebarConfig.structure as SidebarConfigItem[], true)
 
 /** Right-pointing chevron; rotate 90deg when open for down. */
 function ChevronIcon({ open }: { open: boolean }) {
@@ -157,7 +133,7 @@ export default function Sidebar({ defaultWidthPx }: SidebarProps) {
       : isFolderOpen
         ? 'font-bold text-black'
         : 'font-medium text-gray-700'
-    const sortedChildren = sortFolderChildren(item.children)
+    const sortedChildren = sortToDisplayOrder(item.children)
     return (
       <div
         key={item.path}
@@ -213,6 +189,18 @@ export default function Sidebar({ defaultWidthPx }: SidebarProps) {
               className="mt-6 pt-4 border-t border-gray-300"
             >
               <div className="font-semibold text-sm text-gray-600 mb-2">Admin</div>
+              <Link
+                href="/admin/sidebar"
+                className="block py-2 px-3 text-sm hover:bg-gray-200 rounded"
+              >
+                Sidebar
+              </Link>
+              <Link
+                href="/admin/trash"
+                className="block py-2 px-3 text-sm hover:bg-gray-200 rounded"
+              >
+                Trash
+              </Link>
               <Link
                 href="/schemas"
                 className="block py-2 px-3 text-sm hover:bg-gray-200 rounded"

@@ -2,13 +2,13 @@
   "structure": [
     {
       "type": "folder",
-      "path": "component",
+      "path": "components",
       "order": 2,
       "pinned": false,
       "children": [
-        { "type": "page", "path": "component/bottom-sheets", "order": 1, "pinned": false },
-        { "type": "page", "path": "component/tab-bars-chip", "order": 2, "pinned": false },
-        { "type": "page", "path": "component/tab-bars-text", "order": 3, "pinned": false }
+        { "type": "page", "path": "components/bottom-sheets", "order": 1, "pinned": false },
+        { "type": "page", "path": "components/tab-bars-chip", "order": 2, "pinned": false },
+        { "type": "page", "path": "components/tab-bars-text", "order": 3, "pinned": false }
       ]
     },
     {
