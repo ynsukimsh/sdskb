@@ -14,13 +14,13 @@
       "children": [
         {
           "type": "page",
-          "path": "components/bottom-sheets",
+          "path": "components/tab-bars-chip",
           "order": 1,
-          "pinned": false
+          "pinned": true
         },
         {
           "type": "page",
-          "path": "components/tab-bars-chip",
+          "path": "components/bottom-sheets",
           "order": 2,
           "pinned": false
         },
@@ -39,17 +39,17 @@
       "pinned": false,
       "children": [
         {
-          "type": "page",
-          "path": "uipattern/example-pattern",
-          "order": 1,
-          "pinned": false
-        },
-        {
           "type": "folder",
           "path": "uipattern/bobobat",
-          "order": 2,
+          "order": 1,
           "pinned": false,
           "children": []
+        },
+        {
+          "type": "page",
+          "path": "uipattern/example-pattern",
+          "order": 2,
+          "pinned": false
         }
       ]
     },
