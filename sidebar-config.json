@@ -8,28 +8,8 @@
     },
     {
       "type": "folder",
-      "path": "foundations",
-      "order": 2,
-      "pinned": false,
-      "children": [
-        {
-          "type": "page",
-          "path": "foundations/colors",
-          "order": 1,
-          "pinned": false
-        },
-        {
-          "type": "page",
-          "path": "foundations/typography",
-          "order": 2,
-          "pinned": false
-        }
-      ]
-    },
-    {
-      "type": "folder",
       "path": "components",
-      "order": 3,
+      "order": 2,
       "pinned": false,
       "children": [
         {
@@ -55,13 +35,46 @@
     {
       "type": "folder",
       "path": "uipattern",
-      "order": 4,
+      "order": 3,
       "pinned": false,
       "children": [
         {
           "type": "page",
           "path": "uipattern/example-pattern",
           "order": 1,
+          "pinned": false
+        },
+        {
+          "type": "folder",
+          "path": "uipattern/bobobat",
+          "order": 2,
+          "pinned": false,
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "path": "foundation",
+      "order": 4,
+      "pinned": false,
+      "children": [
+        {
+          "type": "page",
+          "path": "foundation/color",
+          "order": 1,
+          "pinned": false
+        },
+        {
+          "type": "page",
+          "path": "foundation/colors",
+          "order": 2,
+          "pinned": false
+        },
+        {
+          "type": "page",
+          "path": "foundation/typography",
+          "order": 3,
           "pinned": false
         }
       ]
