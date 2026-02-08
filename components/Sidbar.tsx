@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useCallback, useEffect } from 'react'
-import { sortToDisplayOrder, type SidebarConfigItem } from '@/lib/sidebar-order'
+import { mergeSidebarWithContent, sortToDisplayOrder, type SidebarConfigItem } from '@/lib/sidebar-order'
 
 const SIDEBAR_DEFAULT_WIDTH_PX = 192
 const SIDEBAR_MIN_WIDTH_PX = 160
@@ -60,35 +60,52 @@ export default function Sidebar({ defaultWidthPx }: SidebarProps) {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
-    fetch('/api/content-structure')
-      .then(async (res) => {
-        const data = await res.json()
-        if (!res.ok) {
-          throw new Error(res.status === 500 && data?.error ? data.error : res.statusText)
+    const load = async () => {
+      if (!cancelled) {
+        setLoading(true)
+        setError(null)
+      }
+      try {
+        const [contentRes, configRes] = await Promise.all([
+          fetch('/api/content-structure', { cache: 'no-store' }),
+          fetch('/api/sidebar-config', { cache: 'no-store' }),
+        ])
+        const contentData = await contentRes.json()
+        const configData = await configRes.json()
+        if (!contentRes.ok) {
+          throw new Error(
+            contentRes.status === 500 && contentData?.error ? contentData.error : contentRes.statusText
+          )
         }
-        return data
-      })
-      .then((data: { structure: SidebarConfigItem[] }) => {
-        if (!cancelled && Array.isArray(data.structure)) {
-          setStructure(data.structure)
+        if (!cancelled && Array.isArray(contentData.structure)) {
+          const contentStructure = contentData.structure as SidebarConfigItem[]
+          const configStructure = Array.isArray(configData.structure) ? configData.structure : []
+          const merged = configStructure.length > 0
+            ? mergeSidebarWithContent(contentStructure, configStructure as SidebarConfigItem[])
+            : sortToDisplayOrder(contentStructure, true)
+          setStructure(merged)
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load sidebar')
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false)
-      })
+      }
+    }
+    load()
+    const onContentSaved = () => load()
+    const onSidebarConfigSaved = () => load()
+    window.addEventListener('content-saved', onContentSaved)
+    window.addEventListener('sidebar-config-saved', onSidebarConfigSaved)
     return () => {
       cancelled = true
+      window.removeEventListener('content-saved', onContentSaved)
+      window.removeEventListener('sidebar-config-saved', onSidebarConfigSaved)
     }
   }, [])
 
-  const sortedStructure = sortToDisplayOrder(structure, true)
+  const sortedStructure = structure.length > 0 ? sortToDisplayOrder(structure, true) : structure
 
   const selectedFolderId = sortedStructure.some(
     (item) => item.type === 'folder' && pathname.startsWith(`/content/${item.path}`)

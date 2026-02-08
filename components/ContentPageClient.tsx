@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
@@ -117,12 +117,18 @@ export function ContentPageClient({ category, slug, initial }: Props) {
       }
       if (data.renamed && data.newSlug) {
         setMessage({ type: 'success', text: 'Saved and renamed. Redirecting…' })
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('content-saved'))
+        }
         router.push(category ? `/content/${category}/${data.newSlug}` : `/content/${data.newSlug}`)
         return
       }
       setMessage({ type: 'success', text: 'Saved successfully' })
       setLastSaved({ ...form })
       setIsEditMode(false)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('content-saved'))
+      }
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to save' })
     } finally {
@@ -134,21 +140,53 @@ export function ContentPageClient({ category, slug, initial }: Props) {
     setForm((prev) => ({ ...prev, ...updates }))
   }
 
+  const saveRef = useRef(save)
+  saveRef.current = save
+  useEffect(() => {
+    if (!isEditMode) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        saveRef.current()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isEditMode])
+
   if (isEditMode) {
     return (
       <article className="max-w-3xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-gray-900">Edit content</h2>
-          {message && (
-            <p
-              className={`text-sm font-medium ${
-                message.type === 'success' ? 'text-green-600' : 'text-red-600'
-              }`}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-60"
             >
-              {message.text}
-            </p>
-          )}
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={cancelEdit}
+              disabled={saving}
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-60"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
+        {message && (
+          <p
+            className={`mb-4 text-sm font-medium ${
+              message.type === 'success' ? 'text-green-600' : 'text-red-600'
+            }`}
+          >
+            {message.text}
+          </p>
+        )}
         <form
           className="space-y-6"
           onSubmit={(e) => {
@@ -227,23 +265,6 @@ export function ContentPageClient({ category, slug, initial }: Props) {
               onChange={(e) => updateForm({ body: e.target.value })}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
             />
-          </div>
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-60"
-            >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-            <button
-              type="button"
-              onClick={cancelEdit}
-              disabled={saving}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-60"
-            >
-              Cancel
-            </button>
           </div>
         </form>
       </article>

@@ -1,10 +1,9 @@
 'use client'
 
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { flushSync } from 'react-dom'
-import sidebarConfig from '@/sidebar-config.json'
-import { sortToDisplayOrder, canReorder, isPinned, type SidebarConfigItem } from '@/lib/sidebar-order'
+import { sortToDisplayOrder, canReorder, isPinned, getValidPathsFromContentStructure, filterConfigToExisting, mergeSidebarWithContent, type SidebarConfigItem } from '@/lib/sidebar-order'
 
 function getLabel(item: SidebarConfigItem): string {
   if (item.type === 'divider') return '— Divider —'
@@ -61,14 +60,58 @@ function setArrayAtPath(
   return next
 }
 
-const initialStructure = sortToDisplayOrder(
-  (sidebarConfig as { structure: SidebarConfigItem[] }).structure,
-  true
-)
+function updateItemAtPath(
+  structure: SidebarConfigItem[],
+  path: number[],
+  updater: (item: SidebarConfigItem) => SidebarConfigItem
+): SidebarConfigItem[] {
+  if (path.length === 0) return structure
+  const [idx, ...rest] = path
+  const item = structure[idx]
+  if (!item) return structure
+  const next = [...structure]
+  if (rest.length === 0) {
+    next[idx] = updater(item)
+    return next
+  }
+  if (item.type !== 'folder') return structure
+  next[idx] = { ...item, children: updateItemAtPath(item.children, rest, updater) }
+  return next
+}
+
+function updateChildPaths(
+  items: SidebarConfigItem[],
+  oldPrefix: string,
+  newPrefix: string
+): SidebarConfigItem[] {
+  return items.map((item) => {
+    if (item.type === 'divider') return item
+    if (item.type === 'page')
+      return {
+        ...item,
+        path: item.path.startsWith(oldPrefix) ? newPrefix + item.path.slice(oldPrefix.length) : item.path,
+      }
+    if (item.type === 'folder')
+      return {
+        ...item,
+        path: item.path.startsWith(oldPrefix) ? newPrefix + item.path.slice(oldPrefix.length) : item.path,
+        children: updateChildPaths(item.children, oldPrefix, newPrefix),
+      }
+    return item
+  })
+}
+
+const initialStructure: SidebarConfigItem[] = []
 
 function pathEquals(a: number[] | null, b: number[]): boolean {
   if (!a || a.length !== b.length) return false
   return a.every((v, i) => v === b[i])
+}
+
+/** True if `path` is a prefix of `openPath` (so the open folder is inside this folder). */
+function pathIsPrefixOf(path: number[], openPath: number[] | null): boolean {
+  if (!openPath || openPath.length <= path.length) return false
+  return path.every((v, i) => openPath[i] === v)
 }
 
 function getItemAtPath(structure: SidebarConfigItem[], path: number[]): SidebarConfigItem | null {
@@ -88,6 +131,40 @@ export default function AdminSidebarPage() {
   const [openFolderPath, setOpenFolderPath] = useState<number[] | null>(null)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [configLoading, setConfigLoading] = useState(true)
+
+  const refetchStructure = useCallback(async () => {
+    const [configData, contentData] = await Promise.all([
+      fetch('/api/sidebar-config', { cache: 'no-store' }).then((r) => r.json()) as Promise<{ structure?: SidebarConfigItem[] }>,
+      fetch('/api/content-structure', { cache: 'no-store' }).then((r) => r.json()) as Promise<{ structure?: SidebarConfigItem[] }>,
+    ])
+    const contentStructure = Array.isArray(contentData.structure) ? contentData.structure : []
+    const rawConfig = Array.isArray(configData.structure) ? configData.structure : []
+    const filteredConfig = filterConfigToExisting(rawConfig, getValidPathsFromContentStructure(contentStructure))
+    const merged =
+      filteredConfig.length > 0
+        ? mergeSidebarWithContent(contentStructure, filteredConfig)
+        : sortToDisplayOrder(contentStructure, true)
+    setStructure(merged)
+    return contentStructure
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setConfigLoading(true)
+    refetchStructure()
+      .catch(() => {
+        if (!cancelled) {
+          setMessage({ type: 'err', text: 'Could not load latest config from repo. Showing cached.' })
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setConfigLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [refetchStructure])
 
   const toggleFolder = useCallback((path: number[]) => {
     setOpenFolderPath((prev) => (pathEquals(prev, path) ? null : path))
@@ -196,15 +273,191 @@ export default function AdminSidebarPage() {
     setStructure((prev) => sortToDisplayOrder([...prev, { type: 'divider', order: maxOrder + 1 }], true))
   }, [structure])
 
-  const createFolder = useCallback(() => {
-    const name = window.prompt('Folder name (path segment):')
+  const createFolder = useCallback(async () => {
+    const name = window.prompt('Folder name (path segment, e.g. my-folder):')
     if (!name?.trim()) return
-    const path = name.trim().toLowerCase().replace(/\s+/g, '-')
-    const maxOrder = getMaxOrder(structure)
-    setStructure((prev) =>
-      sortToDisplayOrder([...prev, { type: 'folder', path, order: maxOrder + 1, pinned: false, children: [] }], true)
-    )
-  }, [structure])
+    const path = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '')
+    if (!path) {
+      setMessage({ type: 'err', text: 'Invalid folder name. Use letters, numbers, hyphens only.' })
+      return
+    }
+    setMessage(null)
+    try {
+      const res = await fetch('/api/create-content-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderPath: path }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setMessage({ type: 'err', text: data.error ?? 'Failed to create folder' })
+        return
+      }
+      setMessage({ type: 'ok', text: `Folder "${path}" created. Refreshing…` })
+      await refetchStructure()
+      setMessage({ type: 'ok', text: 'Folder created. Click Save to add it to sidebar config if needed.' })
+    } catch (e) {
+      setMessage({ type: 'err', text: e instanceof Error ? e.message : 'Failed to create folder' })
+    }
+  }, [refetchStructure])
+
+  const createSubfolder = useCallback(async (folderPath: number[]) => {
+    const folder = getItemAtPath(structure, folderPath)
+    if (!folder || folder.type !== 'folder') return
+    const name = window.prompt('New folder name (path segment, e.g. my-subfolder):')
+    if (!name?.trim()) return
+    const slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '')
+    if (!slug) {
+      setMessage({ type: 'err', text: 'Invalid folder name. Use letters, numbers, hyphens only.' })
+      return
+    }
+    const newPath = `${folder.path}/${slug}`
+    setMessage(null)
+    try {
+      const res = await fetch('/api/create-content-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderPath: newPath }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setMessage({ type: 'err', text: data.error ?? 'Failed to create folder' })
+        return
+      }
+      setMessage({ type: 'ok', text: 'Folder created. Refreshing…' })
+      await refetchStructure()
+      setOpenFolderPath(folderPath)
+      // If refetch didn't include the new subfolder (nested folders), add it locally
+      setStructure((prev) => {
+        const existing = getItemAtPath(prev, folderPath)
+        if (!existing || existing.type !== 'folder') return prev
+        const hasChild = existing.children.some((c) => c.type === 'folder' && c.path === newPath)
+        if (hasChild) return prev
+        const newFolder: SidebarConfigItem = {
+          type: 'folder',
+          path: newPath,
+          order: getMaxOrder(existing.children) + 1,
+          pinned: false,
+          children: [],
+        }
+        return setArrayAtPath(prev, folderPath, [...existing.children, newFolder])
+      })
+      setMessage({ type: 'ok', text: 'Folder created. Click Save to add to sidebar config if needed.' })
+    } catch (e) {
+      setMessage({ type: 'err', text: e instanceof Error ? e.message : 'Failed to create folder' })
+    }
+  }, [structure, refetchStructure])
+
+  const createPageAtRoot = useCallback(async () => {
+    const name = window.prompt('Page name (path segment, e.g. my-page):')
+    if (!name?.trim()) return
+    const slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '')
+    if (!slug) {
+      setMessage({ type: 'err', text: 'Invalid page name. Use letters, numbers, hyphens only.' })
+      return
+    }
+    const displayName = window.prompt('Display name in sidebar (optional):', slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '))
+    setMessage(null)
+    try {
+      const res = await fetch('/api/create-content-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: slug, name: displayName?.trim() || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setMessage({ type: 'err', text: data.error ?? 'Failed to create page' })
+        return
+      }
+      setMessage({ type: 'ok', text: 'Page created. Refreshing…' })
+      await refetchStructure()
+      setMessage({ type: 'ok', text: 'Page created. Click Save to update sidebar config.' })
+    } catch (e) {
+      setMessage({ type: 'err', text: e instanceof Error ? e.message : 'Failed to create page' })
+    }
+  }, [refetchStructure])
+
+  const createPageInFolder = useCallback(async (folderPath: number[]) => {
+    const folder = getItemAtPath(structure, folderPath)
+    if (!folder || folder.type !== 'folder') return
+    const name = window.prompt('Page name (path segment, e.g. my-page):')
+    if (!name?.trim()) return
+    const slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '')
+    if (!slug) {
+      setMessage({ type: 'err', text: 'Invalid page name. Use letters, numbers, hyphens only.' })
+      return
+    }
+    const newPath = `${folder.path}/${slug}`
+    const defaultDisplayName = slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    const displayName = window.prompt('Display name in sidebar (optional):', defaultDisplayName)
+    setMessage(null)
+    try {
+      const res = await fetch('/api/create-content-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: newPath, name: displayName?.trim() || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setMessage({ type: 'err', text: data.error ?? 'Failed to create page' })
+        return
+      }
+      setMessage({ type: 'ok', text: 'Page created. Refreshing…' })
+      await refetchStructure()
+      setOpenFolderPath(folderPath)
+      setMessage({ type: 'ok', text: 'Page created. Click Save to update sidebar config.' })
+    } catch (e) {
+      setMessage({ type: 'err', text: e instanceof Error ? e.message : 'Failed to create page' })
+    }
+  }, [structure, refetchStructure])
+
+  const editItemName = useCallback(
+    async (path: number[]) => {
+      const item = getItemAtPath(structure, path)
+      if (!item || item.type === 'divider') return
+      const current = item.path
+      const name = window.prompt('Name (path segment):', current)
+      if (name == null || !name.trim()) return
+      const newPath = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '')
+      if (!newPath) {
+        setMessage({ type: 'err', text: 'Invalid name. Use letters, numbers, hyphens only.' })
+        return
+      }
+      if (newPath === current) return
+
+      if (item.type === 'folder') {
+        setMessage(null)
+        try {
+          const res = await fetch('/api/rename-content-folder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ oldPath: current, newPath }),
+          })
+          const data = await res.json()
+          if (!res.ok || !data.success) {
+            setMessage({ type: 'err', text: data.error ?? 'Failed to rename folder' })
+            return
+          }
+          setMessage({ type: 'ok', text: 'Folder renamed. Refreshing…' })
+          await refetchStructure()
+          setMessage({ type: 'ok', text: 'Folder renamed in repo and sidebar config.' })
+        } catch (e) {
+          setMessage({ type: 'err', text: e instanceof Error ? e.message : 'Failed to rename folder' })
+        }
+        return
+      }
+
+      // Page: only update local config (file rename is done via content editor / save-content)
+      setStructure((prev) =>
+        updateItemAtPath(prev, path, (it) => {
+          if (it.type === 'page') return { ...it, path: newPath }
+          return it
+        })
+      )
+      setMessage({ type: 'ok', text: 'Name updated in sidebar. Click Save to persist. To rename the file, edit the page content.' })
+    },
+    [structure, refetchStructure]
+  )
 
   const save = useCallback(async () => {
     setSaving(true)
@@ -222,6 +475,7 @@ export default function AdminSidebarPage() {
         return
       }
       setMessage({ type: 'ok', text: 'Saved to repo.' })
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('sidebar-config-saved'))
     } catch (e) {
       setMessage({ type: 'err', text: e instanceof Error ? e.message : 'Request failed' })
     } finally {
@@ -258,6 +512,13 @@ export default function AdminSidebarPage() {
           </button>
           <button
             type="button"
+            onClick={createPageAtRoot}
+            className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+          >
+            Create page (root)
+          </button>
+          <button
+            type="button"
             onClick={save}
             disabled={saving}
             className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
@@ -266,6 +527,9 @@ export default function AdminSidebarPage() {
           </button>
         </div>
 
+        {configLoading && (
+          <p className="mb-4 text-sm text-gray-500">Loading config from repo…</p>
+        )}
         {message && (
           <p
             className={`mb-4 text-sm ${message.type === 'ok' ? 'text-green-700' : 'text-red-700'}`}
@@ -290,6 +554,9 @@ export default function AdminSidebarPage() {
             draggedItem={dragPath ? getItemAtPath(structure, dragPath) : null}
             deleteItem={deleteItem}
             togglePin={togglePin}
+            createSubfolder={createSubfolder}
+            createPageInFolder={createPageInFolder}
+            editItemName={editItemName}
           />
         </ul>
       </div>
@@ -355,6 +622,30 @@ function TrashIcon() {
   )
 }
 
+function CreateFolderIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden>
+      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+    </svg>
+  )
+}
+
+function CreatePageIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden>
+      <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 2l5 5h-4V4h-1zm-5 8h2v2H8v-2zm4 0h2v2h-2v-2zm-4 4h2v2H8v-2zm4 0h2v2h-2v-2z" />
+    </svg>
+  )
+}
+
+function EditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden>
+      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+    </svg>
+  )
+}
+
 function sameZone(a: SidebarConfigItem, b: SidebarConfigItem): boolean {
   if (a.type === 'divider' && b.type === 'divider') return true
   if (a.type !== 'divider' && b.type !== 'divider') return isPinned(a) === isPinned(b)
@@ -387,6 +678,9 @@ function ItemList({
   draggedItem,
   deleteItem,
   togglePin,
+  createSubfolder,
+  createPageInFolder,
+  editItemName,
 }: {
   items: SidebarConfigItem[]
   pathPrefix: number[]
@@ -402,6 +696,9 @@ function ItemList({
   draggedItem: SidebarConfigItem | null
   deleteItem: (path: number[]) => void
   togglePin: (path: number[]) => void
+  createSubfolder: (folderPath: number[]) => void
+  createPageInFolder: (folderPath: number[]) => void
+  editItemName: (path: number[]) => void
 }) {
   const isDragging = (path: number[]) =>
     dragPath && path.length === dragPath.length && path.every((v, i) => v === dragPath[i])
@@ -422,7 +719,10 @@ function ItemList({
         const showHandle = canReorder(item, depth)
         const canPin = item.type !== 'divider' && depth > 0
         const isFolderWithContents = item.type === 'folder' && item.children.length > 0
-        const isFolderOpen = item.type === 'folder' && pathEquals(openFolderPath, path)
+        const canDelete = !isFolderWithContents
+        const isFolderOpen =
+          item.type === 'folder' &&
+          (pathEquals(openFolderPath, path) || pathIsPrefixOf(path, openFolderPath))
         const canDrop = showHandle && draggedItem && sameZone(draggedItem, item) && !isDragging(path)
 
         const handleDragOver = (e: React.DragEvent) => {
@@ -481,38 +781,67 @@ function ItemList({
             ) : (
               <span className="w-6 shrink-0" aria-hidden />
             )}
-            <span
-              className="flex-1 min-w-0 text-sm text-gray-900 truncate"
-              style={{ paddingLeft: pathPrefix.length * 12 }}
-            >
-              {item.type === 'folder' && (
-                <span className="text-gray-500 mr-1" aria-hidden>📁</span>
-              )}
-              {getLabel(item)}
-              {item.type !== 'divider' && (
-                <span className="text-gray-400 font-normal ml-1">({item.path})</span>
-              )}
-            </span>
             {canPin && (
               <button
                 type="button"
                 onClick={() => togglePin(path)}
                 title={(item as { pinned?: boolean }).pinned ? 'Unpin' : 'Pin'}
-                className="rounded p-1.5 text-gray-600 hover:bg-gray-100 inline-flex items-center justify-center"
+                className="rounded p-1.5 text-gray-600 hover:bg-gray-100 inline-flex items-center justify-center shrink-0"
                 aria-label={(item as { pinned?: boolean }).pinned ? 'Unpin' : 'Pin'}
               >
                 <StarIcon pinned={!!(item as { pinned?: boolean }).pinned} />
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => deleteItem(path)}
-              className={`rounded p-1.5 inline-flex items-center justify-center ${isFolderWithContents ? 'text-red-300 opacity-60' : 'text-red-600 hover:bg-red-50'}`}
-              aria-label="Remove from sidebar"
-              title={isFolderWithContents ? 'Folders should have no contents to be deleted' : 'Remove from sidebar'}
+            <span
+              className="flex-1 min-w-0 text-sm text-gray-900 truncate flex items-center gap-1.5"
+              style={{ paddingLeft: pathPrefix.length * 12 }}
             >
-              <TrashIcon />
-            </button>
+              {getLabel(item)}
+            </span>
+            {item.type !== 'divider' && (
+              <button
+                type="button"
+                onClick={() => editItemName(path)}
+                className="rounded p-1.5 inline-flex items-center justify-center text-gray-500 hover:bg-gray-100 shrink-0"
+                aria-label="Edit name"
+                title="Edit name"
+              >
+                <EditIcon />
+              </button>
+            )}
+            {item.type === 'folder' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => createSubfolder(path)}
+                  className="rounded p-1.5 inline-flex items-center justify-center text-gray-500 hover:bg-gray-100 shrink-0"
+                  aria-label="Create folder inside"
+                  title="Create folder inside"
+                >
+                  <CreateFolderIcon />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => createPageInFolder(path)}
+                  className="rounded p-1.5 inline-flex items-center justify-center text-gray-500 hover:bg-gray-100 shrink-0"
+                  aria-label="Create page inside"
+                  title="Create page inside"
+                >
+                  <CreatePageIcon />
+                </button>
+              </>
+            )}
+            {canDelete && (
+              <button
+                type="button"
+                onClick={() => deleteItem(path)}
+                className="rounded p-1.5 inline-flex items-center justify-center text-red-600 hover:bg-red-50 shrink-0"
+                aria-label="Remove from sidebar"
+                title="Remove from sidebar"
+              >
+                <TrashIcon />
+              </button>
+            )}
           </>
         )
 
@@ -544,22 +873,31 @@ function ItemList({
                 >
                   <div className="min-h-0 overflow-hidden">
                     <ul className="divide-y divide-gray-200 border-l border-gray-200 ml-4 mr-3 px-3 py-2 bg-green-50 rounded-b-lg overflow-hidden mb-3">
-                      <ItemList
-                        items={item.children}
-                        pathPrefix={path}
-                        openFolderPath={openFolderPath}
-                        toggleFolder={toggleFolder}
-                        getSiblingArray={getSiblingArray}
-                        moveByDrag={moveByDrag}
-                        dragPath={dragPath}
-                        setDragPath={setDragPath}
-                        dropTarget={dropTarget}
-                        setDropTarget={setDropTarget}
-                        dragPreviewRef={dragPreviewRef}
-                        draggedItem={draggedItem}
-                        deleteItem={deleteItem}
-                        togglePin={togglePin}
+                      {item.children.length === 0 ? (
+                        <li className="py-3 px-3 text-sm text-gray-500 italic list-none">
+                          No content. Empty folder.
+                        </li>
+                      ) : (
+                        <ItemList
+                          items={item.children}
+                          pathPrefix={path}
+                          openFolderPath={openFolderPath}
+                          toggleFolder={toggleFolder}
+                          getSiblingArray={getSiblingArray}
+                          moveByDrag={moveByDrag}
+                          dragPath={dragPath}
+                          setDragPath={setDragPath}
+                          dropTarget={dropTarget}
+                          setDropTarget={setDropTarget}
+                          dragPreviewRef={dragPreviewRef}
+                          draggedItem={draggedItem}
+                          deleteItem={deleteItem}
+                          togglePin={togglePin}
+                        createSubfolder={createSubfolder}
+                        createPageInFolder={createPageInFolder}
+                        editItemName={editItemName}
                       />
+                      )}
                     </ul>
                   </div>
                 </div>
