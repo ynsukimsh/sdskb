@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
+import { useState, useCallback, useEffect } from 'react'
 import type { ContentNavSection } from '@/lib/content-nav'
 
 const SIDEBAR_DEFAULT_WIDTH_PX = 192
@@ -37,10 +38,22 @@ function ChevronIcon({ open }: { open: boolean }) {
 }
 
 export default function Sidebar({ nav, defaultWidthPx }: SidebarProps) {
+  const pathname = usePathname()
   // Which top-level folders are expanded (e.g. "foundations", "components")
   const [openFolderIds, setOpenFolderIds] = useState<Set<string>>(() => new Set())
   // Sidebar width in px; controllable via resize handle or defaultWidthPx
   const [widthPx, setWidthPx] = useState(defaultWidthPx ?? SIDEBAR_DEFAULT_WIDTH_PX)
+
+  const selectedFolderId = nav.some((f) => pathname.startsWith(`/content/${f.category}`))
+    ? nav.find((f) => pathname.startsWith(`/content/${f.category}`))?.category ?? null
+    : null
+
+  // When a folder is selected (user is on a page under that category), open only that folder
+  useEffect(() => {
+    if (selectedFolderId) {
+      setOpenFolderIds(new Set([selectedFolderId]))
+    }
+  }, [selectedFolderId])
 
   const startResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -62,10 +75,12 @@ export default function Sidebar({ nav, defaultWidthPx }: SidebarProps) {
 
   function toggleFolder(folderId: string) {
     setOpenFolderIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(folderId)) next.delete(folderId)
-      else next.add(folderId)
-      return next
+      if (prev.has(folderId)) {
+        const next = new Set(prev)
+        next.delete(folderId)
+        return next
+      }
+      return new Set([folderId])
     })
   }
 
@@ -93,6 +108,12 @@ export default function Sidebar({ nav, defaultWidthPx }: SidebarProps) {
           {/* Top-level folders (e.g. Foundation, Component, UI Pattern) */}
           {nav.map((folder) => {
             const isFolderOpen = openFolderIds.has(folder.category)
+            const isSelected = selectedFolderId === folder.category
+            const folderLabelClass = isSelected
+              ? 'font-medium text-black'
+              : isFolderOpen
+                ? 'font-bold text-black'
+                : 'font-medium text-gray-700'
             return (
               <div
                 key={folder.category}
@@ -109,20 +130,7 @@ export default function Sidebar({ nav, defaultWidthPx }: SidebarProps) {
                   type="button"
                   onClick={() => toggleFolder(folder.category)}
                   data-sidebar="folder-header"
-                  className="
-                    flex
-                    w-full
-                    items-center
-                    gap-1
-                    font-semibold
-                    text-sm
-                    text-black
-                    mb-0.5
-                    py-0.5
-                    px-0.5
-                    rounded
-                    hover:bg-gray-300/80
-                  "
+                  className={`flex w-full items-center gap-1 text-sm mb-0.5 py-0.5 px-0.5 rounded hover:bg-gray-300/80 ${folderLabelClass}`}
                 >
                   <span
                     className="
@@ -137,32 +145,30 @@ export default function Sidebar({ nav, defaultWidthPx }: SidebarProps) {
                   <span>{folder.label}</span>
                 </button>
                 {/* Contents under this folder (e.g. Color, Typography under Foundation) */}
-                {isFolderOpen && (
+                <div
+                  className="grid transition-[grid-template-rows] duration-200 ease-out"
+                  style={{ gridTemplateRows: isFolderOpen ? '1fr' : '0fr' }}
+                >
                   <div
                     data-sidebar="folder-contents"
-                    className="
-                      pl-4
-                    "
+                    className="min-h-0 overflow-hidden pl-4"
                   >
-                    {folder.files.map((contentItem) => (
-                      <Link
-                        key={contentItem.slug}
-                        href={`/content/${folder.category}/${contentItem.slug}`}
-                        data-sidebar="content-link"
-                        className="
-                          block
-                          py-0.5
-                          px-3
-                          text-sm
-                          hover:bg-gray-200
-                          rounded
-                        "
-                      >
-                        {contentItem.label}
-                      </Link>
-                    ))}
+                    {folder.files.map((contentItem) => {
+                      const href = `/content/${folder.category}/${contentItem.slug}`
+                      const isPageSelected = pathname === href
+                      return (
+                        <Link
+                          key={contentItem.slug}
+                          href={href}
+                          data-sidebar="content-link"
+                          className={`block py-0.5 px-3 text-sm hover:bg-gray-200 rounded ${isPageSelected ? 'text-blue-500 font-medium' : ''}`}
+                        >
+                          {contentItem.label}
+                        </Link>
+                      )
+                    })}
                   </div>
-                )}
+                </div>
               </div>
             )
           })}
