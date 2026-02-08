@@ -5,7 +5,7 @@ description: |-
   한 화면에서 전체에 해당하는 CTA 버튼 성격으로 활용 가능합니다.
   목적에 따라 scroll을 해도 화면에 플로팅하여 고정할 수 있습니다.
   필요에 따라 레이블의 좌측에 아이콘을 옵션으로 제공할 수 있습니다.
-figma_url: ''
+figma_url: https://www.figma.com/design/S5GcFD0Q0SNJqsQBks0qgz/%F0%9F%9F%A0-SOLID---Core-UI-Kit-2.1?node-id=37-451224&t=bNBDO67pJ82Y8xwE-0
 figmaLink: https://www.figma.com/design/S5GcFD0Q0SNJqsQBks0qgz/%F0%9F%9F%A0-SOLID---Core-UI-Kit-2.1?node-id=23-287181&t=vI1LxiuhpkYXfXsB-11
 do: |-
   바텀시트의 CTA는 반드시 브랜드 컬러로 활용
