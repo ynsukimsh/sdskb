@@ -117,7 +117,7 @@ export function ContentPageClient({ category, slug, initial }: Props) {
       }
       if (data.renamed && data.newSlug) {
         setMessage({ type: 'success', text: 'Saved and renamed. Redirecting…' })
-        router.push(`/content/${category}/${data.newSlug}`)
+        router.push(category ? `/content/${category}/${data.newSlug}` : `/content/${data.newSlug}`)
         return
       }
       setMessage({ type: 'success', text: 'Saved successfully' })

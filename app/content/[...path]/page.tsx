@@ -6,10 +6,22 @@ import { fetchContentFromGitHub } from '@/lib/github-content'
 
 export const dynamic = 'force-dynamic'
 
-type Props = { params: Promise<{ category: string; slug: string }> }
+type Props = { params: Promise<{ path: string[] }> }
 
-export default async function ContentSlugPage({ params }: Props) {
-  const { category, slug } = await params
+/**
+ * Handles both root-level (e.g. /content/solid) and category (e.g. /content/foundation/color) content.
+ * path = ['solid'] → content/solid.md; path = ['foundation', 'color'] → content/foundation/color.md
+ * /content with no segments is handled by ../page.tsx
+ */
+export default async function ContentPage({ params }: Props) {
+  const { path: pathSegments } = await params
+
+  if (pathSegments.length !== 1 && pathSegments.length !== 2) {
+    notFound()
+  }
+
+  const category = pathSegments.length === 2 ? pathSegments[0] : null
+  const slug = pathSegments.length === 2 ? pathSegments[1]! : pathSegments[0]!
 
   let raw: string
   try {
@@ -35,7 +47,7 @@ export default async function ContentSlugPage({ params }: Props) {
 
   return (
     <ContentPageClient
-      category={category}
+      category={category ?? ''}
       slug={slug}
       initial={initial}
     />

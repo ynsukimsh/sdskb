@@ -53,12 +53,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { category, slug, content, name } = body
 
-    if (!category || typeof category !== 'string' || !slug || typeof slug !== 'string') {
+    if (typeof category !== 'string' || !slug || typeof slug !== 'string') {
       return NextResponse.json(
         { success: false, error: 'Missing or invalid category or slug' },
         { status: 400 }
       )
     }
+    // category may be '' for root-level content (e.g. content/solid.md)
+    const contentPath = category ? `content/${category}/${slug}.md` : `content/${slug}.md`
+    const sidebarPath = category ? `${category}/${slug}` : slug
     if (content === undefined || typeof content !== 'string') {
       return NextResponse.json(
         { success: false, error: 'Missing or invalid content' },
@@ -87,8 +90,8 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const oldPath = `content/${category}/${slug}.md`
-      const newPath = `content/${category}/${newSlug}.md`
+      const oldPath = contentPath
+      const newPath = category ? `content/${category}/${newSlug}.md` : `content/${newSlug}.md`
 
       // Check if new filename already exists
       try {
@@ -157,8 +160,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Update sidebar config: replace old path with new path
-      const oldSidebarPath = `${category}/${slug}`
-      const newSidebarPath = `${category}/${newSlug}`
+      const oldSidebarPath = sidebarPath
+      const newSidebarPath = category ? `${category}/${newSlug}` : newSlug
 
       let sidebarSha: string | undefined
       let sidebarJson: { structure?: SidebarItem[] }
@@ -220,7 +223,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Normal update in place
-    const path = `content/${category}/${slug}.md`
+    const path = contentPath
     const message = `Update ${slug}`
 
     let sha: string | undefined

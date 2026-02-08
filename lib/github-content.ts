@@ -35,16 +35,16 @@ export function getOctokit(): Promise<Octokit> {
 }
 
 /**
- * Fetches markdown file content from GitHub for the given category and slug.
- * Uses repos.getContent for content/${category}/${slug}.md.
+ * Fetches markdown file content from GitHub.
+ * When category is null, fetches content/${slug}.md (root-level). Otherwise content/${category}/${slug}.md.
  * @returns Decoded file content as UTF-8 string
  * @throws Not found or API errors (caller can use notFound() on 404)
  */
 export async function fetchContentFromGitHub(
-  category: string,
+  category: string | null,
   slug: string
 ): Promise<string> {
-  const path = `content/${category}/${slug}.md`
+  const path = category ? `content/${category}/${slug}.md` : `content/${slug}.md`
   const octokit = await getOctokit()
 
   try {
@@ -103,6 +103,12 @@ export async function fetchContentStructureFromGitHub(): Promise<SidebarConfigIt
     .filter((e): e is ContentEntry & { type: 'dir' } => e.type === 'dir')
     .map((e) => e.name)
 
+  // Root-level .md files as top-level pages (path = slug only)
+  const rootMdFiles = contentEntries
+    .filter((e): e is ContentEntry & { type: 'file' } => e.type === 'file' && e.name.endsWith('.md'))
+    .map((e) => e.name.replace(/\.md$/, ''))
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+
   const orderedCategories = [...categoryDirs].sort((a, b) => {
     const ai = CONTENT_CATEGORY_ORDER.indexOf(a)
     const bi = CONTENT_CATEGORY_ORDER.indexOf(b)
@@ -114,6 +120,15 @@ export async function fetchContentStructureFromGitHub(): Promise<SidebarConfigIt
 
   const structure: SidebarConfigItem[] = []
   let order = 0
+
+  for (const slug of rootMdFiles) {
+    structure.push({
+      type: 'page',
+      path: slug,
+      order: ++order,
+      pinned: false,
+    })
+  }
 
   for (const category of orderedCategories) {
     const { data: categoryEntries } = await octokit.repos.getContent({
