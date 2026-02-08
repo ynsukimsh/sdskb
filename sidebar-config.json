@@ -65,6 +65,13 @@
           "pinned": false
         }
       ]
+    },
+    {
+      "type": "folder",
+      "path": "babo",
+      "order": 5,
+      "pinned": false,
+      "children": []
     }
   ]
 }
