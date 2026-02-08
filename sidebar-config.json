@@ -8,19 +8,19 @@
     },
     {
       "type": "folder",
-      "path": "foundation",
+      "path": "foundations",
       "order": 2,
       "pinned": false,
       "children": [
         {
           "type": "page",
-          "path": "foundation/colors",
+          "path": "foundations/colors",
           "order": 1,
           "pinned": false
         },
         {
           "type": "page",
-          "path": "foundation/typography",
+          "path": "foundations/typography",
           "order": 2,
           "pinned": false
         }
@@ -49,13 +49,6 @@
           "path": "components/tab-bars-text",
           "order": 3,
           "pinned": false
-        },
-        {
-          "type": "folder",
-          "path": "components/bobo",
-          "order": 4,
-          "pinned": false,
-          "children": []
         }
       ]
     },
