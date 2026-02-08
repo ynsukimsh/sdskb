@@ -2,8 +2,22 @@
   "structure": [
     {
       "type": "folder",
-      "path": "foundation",
+      "path": "uipattern",
       "order": 1,
+      "pinned": false,
+      "children": [
+        {
+          "type": "page",
+          "path": "uipattern/example-pattern",
+          "order": 1,
+          "pinned": false
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "path": "foundation",
+      "order": 2,
       "pinned": false,
       "children": [
         {
@@ -23,7 +37,7 @@
     {
       "type": "folder",
       "path": "components",
-      "order": 2,
+      "order": 3,
       "pinned": false,
       "children": [
         {
@@ -42,20 +56,6 @@
           "type": "page",
           "path": "components/tab-bars-text",
           "order": 3,
-          "pinned": false
-        }
-      ]
-    },
-    {
-      "type": "folder",
-      "path": "uipattern",
-      "order": 3,
-      "pinned": false,
-      "children": [
-        {
-          "type": "page",
-          "path": "uipattern/example-pattern",
-          "order": 1,
           "pinned": false
         }
       ]
