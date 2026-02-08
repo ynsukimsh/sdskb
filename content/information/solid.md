@@ -4,24 +4,64 @@ image: /asset/images/home_hero.png
 textBody: "SOLID DS is a good design system and this site is documentation for it."
 ---
 
-# About SOLID Design System
+## SOLID 디자인 시스템
 
-SOLID DS is a good design system and this site is documentation for it.
+SOLID 디자인 시스템은 신한은행의 디지털 채널 전체를 위한 하나의 가이드입니다. 구축 및 설계 시 본 가이드가 우선적으로 고려되어야 하며, 적재한 기준을 토대로 빠른 의사결정을 합니다. 또한 본 가이드는 상식적이고 합리적인 협의를 통해 새로운 기준의 수립과 적재가 가능합니다. 
 
-## Getting started
+## 고객경험 철학과 가치
 
-Use the sidebar to explore **foundations**, **components**, and **UI patterns**. Each section includes:
+신한은행의 다양한 디지털 서비스 환경에서 일관된 고객경험, 자연스러운 사용경험을 유도하고, 신한은행의 가치를 효과적으로 전달하기 위해 다음과 같은 고객경험 철학을 수립합니다.
 
-- Clear guidelines and usage
-- Do's and don'ts where applicable
-- Links to Figma when available
+## 신한은행의 고객경험 가치
 
-## Key principles
+**고객을 위하는 마음**
 
-1. **Consistency** — Use tokens and components from the system.
-2. **Accessibility** — Meet contrast and interaction standards.
-3. **Documentation** — Keep this site up to date as the system evolves.
+신한은행은 고객, 사회, 환경의 상생을 위해 끊임없이 노력합니다. 
 
-> This design system helps product and engineering teams build cohesive, accessible experiences.
+이를 위해 고객 중심의 금융 서비스를 제공하고, 사회적 책임을 다하며, ESG 경영을 실천합니다. 
 
-For questions or contributions, reach out to the design system team.
+신한은행은 고객을 위하는 마음을 바탕으로 모든 고객이 행복할 수 있는 따뜻한 금융 세상을 만들어 나갈 것입니다.  
+
+**모두를 감싸 안는 온기**
+
+신한은행은 고객 중심의 금융 서비스를 제공하여 모든 고객이 행복할 수 있는 따뜻한 금융 세상을 만들어 나갑니다. 
+
+이를 위해 소외된 고객을 위한 서비스 개발과 금융 교육을 제공하며, 고객의 편안한 금융 생활을 지원합니다. 
+
+신한은행은 고객을 위하는 마음을 바탕으로 모두가 함께 성장할 수 있는 금융 생태계를 조성할 것입니다.  
+
+**새로운 것에 도전하는 개척자**
+
+신한은행은 혁신을 통해 고객의 삶을 변화시키는 선도적인 금융기관입니다. 
+
+국내 최초의 무인점포, 인터넷/텔레뱅킹/프라이빗 뱅킹과 AI뱅커 등 혁신적인 서비스들을 통해 고객의 편의와 만족을 높이고 있습니다. 
+
+또한, 변화를 두려워하지 않는 도전 정신으로 급변하는 금융 환경에 대응하고, 새로운 고객 가치를 창출해 나가고 있습니다. 
+
+신한은행은 고객을 최우선으로 생각하는 개척자의 자세로 고객경험을 혁신하여 국내 최고의 금융 기업으로 거듭날 것입니다. 
+
+**철학과 가치를 실천하는 실행자**
+
+신한은행은 고객 중심의 철학과 가치를 행동으로 실천하고 실행합니다. 
+
+재래시장에서 시작하여 IMF 위기를 극복하고 국내 최대 금융기업으로 성장한 것은 이러한 실행력의 결과입니다. 
+
+신한은행의 혁신은 경쟁을 위한 것이 아니라 고객의 편의를 위한 것이었습니다. 이러한 고객 중심의 혁신은 고객과 세상을 이롭게 하는   신한은행의 존재 가치를 증명합니다. 
+
+**올바른 금융생활을 추구하는 전문가**
+
+신한은행은 기본에 충실하고 이를 바탕으로 혁신을 추구하는 전문가입니다. 
+
+IMF 외환위기와 세계 금융위기에서도 고객의 자산을 지키고, 고객의 니즈에 맞는 종합 금융 서비스를 제공하여 고객의 올바른 금융생활을 지원해왔습니다.
+
+앞으로도, 끊임없는 내실성장과 자기점검을 통해 고객의 자산 가치를 보호하고, 질적으로 차별화된 전문 경험을 제시해 나갈 것입니다.
+
+**신뢰로 도약하는 은행**
+
+신한은행은 창립 이후 수많은 혁신을 주도하며 도약해 왔습니다. 그 중심에는 신뢰라는 견고한 기반이 있었습니다.
+
+신뢰는 금융의 본질이자 기본입니다. 고객의 자산을 안전하게 지키고, 고객의 금융 생활을 보다 편리하고 풍요롭게 만드는 것이 금융의   역할입니다. 신한은행은 이러한 신뢰를 바탕으로 고객의 삶에 꼭 필요한 금융 서비스를 제공하기 위해 노력하고 있습니다.
+
+국내 최초로 사이버 금융 사기 방지 서비스를 실시하는 등, 신한은행은 고객 신뢰를 기본으로 하는 근본적 가치를 실천하며 국내 최고의  금융 기업으로 자리매김했습니다.
+
+앞으로도 신한은행은 신뢰를 기반으로 고객의 자산 가치를 안전하게 지켜내고, 고객의 리스크 요인에 선제적으로 대응하며, 탁월한        금융소비자보호 체계를 갖추기 위해 끊임없이 노력할 것입니다.

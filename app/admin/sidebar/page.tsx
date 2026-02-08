@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useRef } from 'react'
+import Link from 'next/link'
 import { flushSync } from 'react-dom'
 import sidebarConfig from '@/sidebar-config.json'
 import { sortToDisplayOrder, canReorder, isPinned, type SidebarConfigItem } from '@/lib/sidebar-order'
@@ -279,6 +280,12 @@ export default function AdminSidebarPage() {
         <p className="text-sm text-gray-600 mb-4">Edit order, pin, and structure. Save writes to GitHub.</p>
 
         <div className="flex flex-wrap gap-2 mb-4">
+          <Link
+            href="/admin/trash"
+            className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+          >
+            Trash
+          </Link>
           <button
             type="button"
             onClick={insertDivider}

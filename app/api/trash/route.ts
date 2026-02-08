@@ -79,16 +79,11 @@ export async function GET() {
   }
 }
 
-/** POST: body { action: 'move' | 'restore', contentPath?: string, trashPath?: string }
- *  move: contentPath = content-relative path e.g. "foundation/colors.md" -> move to content/trash/...
- *  restore: trashPath = full path e.g. "content/trash/foundation/colors.md" -> move back to content/...
- */
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { action, contentPath, trashPath } = body
+async function handlePost(request: NextRequest): Promise<NextResponse> {
+  const body = await request.json()
+  const { action, contentPath, trashPath } = body
 
-    if (action === 'move') {
+  if (action === 'move') {
       if (!contentPath || typeof contentPath !== 'string') {
         return NextResponse.json(
           { success: false, error: 'Missing or invalid contentPath' },
@@ -191,10 +186,57 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Invalid action; use "move" or "restore"' },
-      { status: 400 }
-    )
+    if (action === 'delete') {
+      if (!trashPath || typeof trashPath !== 'string') {
+        return NextResponse.json(
+          { success: false, error: 'Missing or invalid trashPath' },
+          { status: 400 }
+        )
+      }
+      if (!trashPath.startsWith(TRASH_PREFIX)) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid trash path' },
+          { status: 400 }
+        )
+      const octokit = await getOctokit()
+      const { data: fileData } = await octokit.repos.getContent({
+        owner,
+        repo,
+        path: trashPath,
+      })
+      if (Array.isArray(fileData) || !('sha' in fileData)) {
+        return NextResponse.json(
+          { success: false, error: 'Trash item not found or not a file' },
+          { status: 400 }
+        )
+      }
+      await octokit.repos.deleteFile({
+        owner,
+        repo,
+        path: trashPath,
+        message: `Permanently delete from trash: ${trashPath}`,
+        sha: fileData.sha,
+      })
+      return NextResponse.json({
+        success: true,
+        message: `Permanently deleted ${trashPath}`,
+      })
+    }
+
+  return NextResponse.json(
+    { success: false, error: 'Invalid action; use "move", "restore", or "delete"' },
+    { status: 400 }
+  )
+}
+
+/** POST: body { action: 'move' | 'restore' | 'delete', contentPath?: string, trashPath?: string }
+ *  move: contentPath = content-relative path e.g. "foundation/colors.md" -> move to content/trash/...
+ *  restore: trashPath = full path e.g. "content/trash/foundation/colors.md" -> move back to content/...
+ *  delete: trashPath = full path -> permanently remove from trash (no restore).
+ */
+export async function POST(request: NextRequest) {
+  try {
+    return await handlePost(request)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json(
@@ -203,3 +245,4 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
